@@ -2,6 +2,7 @@ package com.study.teller.service;
 
 import com.study.teller.common.BizException;
 import com.study.teller.common.MsgUtil;
+import com.study.teller.common.Validator;
 import com.study.teller.msg.DepositMsg;
 import com.study.teller.sender.MsgSender;
 import com.study.teller.vo.DepositReqVo;
@@ -10,6 +11,16 @@ import com.study.teller.vo.DepositResVo;
 public class DepositService {
 
     public DepositResVo deposit(DepositReqVo vo) throws Exception {
+    	
+        // 0. 입력값 검증
+        Validator.required(vo.getAcctNo(), "계좌번호");
+        Validator.numeric(vo.getAcctNo(), "계좌번호");
+        Validator.maxLength(vo.getAcctNo(), 14, "계좌번호");
+
+        Validator.required(vo.getCustNm(), "고객명");
+        Validator.maxLength(vo.getCustNm(), 10, "고객명");
+
+        Validator.positive(vo.getAmount(), "입금금액");
 
         // 1. 공통부 채우기
         vo.setTrCode("DEP0001");

@@ -1,5 +1,7 @@
 package com.study.teller.service;
 
+import com.study.teller.common.BizException;
+import com.study.teller.common.Validator;
 import com.study.teller.msg.HistoryMsg;
 import com.study.teller.sender.MsgSender;
 import com.study.teller.vo.HistoryReqVo;
@@ -8,6 +10,16 @@ import com.study.teller.vo.HistoryResVo;
 public class HistoryService {
 
     public HistoryResVo history(HistoryReqVo vo) throws Exception {
+    	
+    	  // 0. 입력값 검증
+        Validator.required(vo.getAcctNo(), "계좌번호");
+        Validator.numeric(vo.getAcctNo(), "계좌번호");
+        Validator.date(vo.getFromDate(), "조회시작일");
+        Validator.date(vo.getToDate(), "조회종료일");
+
+        if (vo.getFromDate().compareTo(vo.getToDate()) > 0) {
+            throw new BizException("V006", "조회 시작일이 종료일보다 늦습니다.");
+        }
 
         // 1. 공통부 채우기
         vo.setTrCode("INQ0002");
