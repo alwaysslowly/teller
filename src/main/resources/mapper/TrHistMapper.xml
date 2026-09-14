@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.teller.mapper.TrHistMapper">
+
+    <insert id="insertHist" parameterType="com.study.teller.vo.TrHistVo">
+        INSERT INTO TB_TR_HIST (
+            TR_NO, BANK_CODE, BRANCH_CODE, EMP_NO, TR_CODE,
+            TR_DATE, TR_TIME, ACCT_NO, CUST_NM,
+            AMOUNT, BALANCE, RES_CODE, RES_MSG
+        ) VALUES (
+            #{trNo}, #{bankCode}, #{branchCode}, #{empNo}, #{trCode},
+            #{trDate}, #{trTime}, #{acctNo}, #{custNm},
+            #{amount}, #{balance}, #{resCode}, #{resMsg}
+        )
+    </insert>
+
+    <select id="selectHist" parameterType="string"
+            resultType="com.study.teller.vo.TrHistVo">
+        SELECT TR_NO, BANK_CODE, BRANCH_CODE, EMP_NO, TR_CODE,
+               TR_DATE, TR_TIME, ACCT_NO, CUST_NM,
+               AMOUNT, BALANCE, RES_CODE, RES_MSG
+          FROM TB_TR_HIST
+         WHERE TR_NO = #{trNo}
+    </select>
+
+</mapper>
