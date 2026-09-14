@@ -10,6 +10,9 @@
         th { background: #eee; }
         .num { text-align: right; }
         .center { text-align: center; }
+        tbody tr { cursor: pointer; }
+        tbody tr:hover { background: #f5f5f5; }
+        tbody tr.on { background: #dde8f0; }
     </style>
 </head>
 <body>
@@ -39,7 +42,19 @@
     </tbody>
 </table>
 
+<div id="detail" style="margin-top:18px; display:none;">
+    <b>선택한 거래</b>
+    <table style="margin-top:6px;">
+        <tr><th>거래일시</th><td id="dtDate"></td></tr>
+        <tr><th>적요</th><td id="dtSummary"></td></tr>
+        <tr><th>거래금액</th><td class="num" id="dtAmount"></td></tr>
+        <tr><th>거래후잔액</th><td class="num" id="dtBalance"></td></tr>
+    </table>
+</div>
+
 <script>
+
+var gList = [];   // 조회된 거래내역 목록
 
 function fnSearch() {
 
@@ -74,13 +89,14 @@ function fnSearch() {
 function fnSetGrid(data) {
 
     var tbody = document.getElementById("gridBody");
-    tbody.innerHTML = "";                 // 기존 내용 지우기
+    tbody.innerHTML = "";
+    document.getElementById("detail").style.display = "none";
 
-    var list = data.list;
+    gList = data.list;                    // ★ 목록 보관
 
-    for (var i = 0; i < list.length; i++) {
+    for (var i = 0; i < gList.length; i++) {
 
-        var item = list[i];
+        var item = gList[i];
         var tr = document.createElement("tr");
 
         tr.innerHTML =
@@ -89,6 +105,8 @@ function fnSetGrid(data) {
             "<td>" + item.summary + "</td>" +
             "<td class='num'>" + fnAmountFormat(item.amount) + "</td>" +
             "<td class='num'>" + fnAmountFormat(item.balance) + "</td>";
+
+        tr.onclick = fnRowClick(i);       // ★ 행 클릭 연결
 
         tbody.appendChild(tr);
     }
@@ -114,6 +132,33 @@ function fnTimeFormat(tm) {
     if (!tm || tm.length != 6) return tm;
     return tm.substr(0,2) + ":" + tm.substr(2,2) + ":" + tm.substr(4,2);
 }
+
+// ★ 행 클릭
+function fnRowClick(rowIdx) {
+    return function() {
+
+        // 선택 표시
+        var rows = document.getElementById("gridBody").children;
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].className = "";
+        }
+        rows[rowIdx].className = "on";
+
+        // 상세 채우기
+        var item = gList[rowIdx];
+
+        document.getElementById("dtDate").innerText =
+            fnDateFormat(item.trDate) + " " + fnTimeFormat(item.trTime);
+        document.getElementById("dtSummary").innerText = item.summary;
+        document.getElementById("dtAmount").innerText  = fnAmountFormat(item.amount) + "원";
+        document.getElementById("dtBalance").innerText = fnAmountFormat(item.balance) + "원";
+
+        document.getElementById("detail").style.display = "";
+    };
+}
+
+
+
 
 </script>
 
