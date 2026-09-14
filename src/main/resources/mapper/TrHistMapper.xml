@@ -24,5 +24,16 @@
           FROM TB_TR_HIST
          WHERE TR_NO = #{trNo}
     </select>
+    
+    	
+   	 <select id="selectHistList" parameterType="string"
+            resultType="com.study.teller.vo.TrHistVo">
+        SELECT TR_NO, BANK_CODE, BRANCH_CODE, EMP_NO, TR_CODE,
+               TR_DATE, TR_TIME, ACCT_NO, CUST_NM,
+               AMOUNT, BALANCE, RES_CODE, RES_MSG
+          FROM TB_TR_HIST
+         WHERE ACCT_NO = #{acctNo}
+         ORDER BY REG_DTM DESC
+    </select>
 
 </mapper>

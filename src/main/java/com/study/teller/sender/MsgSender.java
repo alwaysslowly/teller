@@ -34,14 +34,12 @@ public class MsgSender {
     /** 입금 응답 */
     private static String makeDepositRes(String reqMsg) throws Exception {
 
-        // 요청전문에서 금액을 꺼낸다 (73번째부터 15자리)
         String amtStr = MsgUtil.cut(reqMsg, 73, 15).trim();
         long amount = Long.parseLong(amtStr);
 
         StringBuilder sb = new StringBuilder();
         sb.append(MsgUtil.padStr("DEP0001", 8));
 
-        // ★ 100만원 초과면 한도초과로 실패
         if (amount > 1000000) {
             sb.append(MsgUtil.padStr("E004", 4));
             sb.append(MsgUtil.padStr("일일 한도를 초과했습니다", 40));
@@ -50,14 +48,21 @@ public class MsgSender {
             return addLength(sb.toString());
         }
 
-        // 정상
         sb.append(MsgUtil.padStr("0000", 4));
         sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
         sb.append(MsgUtil.padNum(String.valueOf(1000000 + amount), 15));
-        sb.append(MsgUtil.padStr("TR2026091001", 12));
+        sb.append(MsgUtil.padStr(nextTrNo(), 12));        // ← 여기
         return addLength(sb.toString());
     }
 
+    /** 거래번호 채번 (스텁용) */
+    private static int seq = 0;
+    private static String nextTrNo() throws Exception {
+        seq++;
+        return "TR" + MsgUtil.padNum(String.valueOf(seq), 10);
+    }
+    
+    
     /** 조회 응답 */
     private static String makeInquiryRes() throws Exception {
         StringBuilder sb = new StringBuilder();

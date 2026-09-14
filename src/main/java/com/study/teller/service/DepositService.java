@@ -60,8 +60,8 @@ public class DepositService {
     private void saveHist(DepositReqVo vo, DepositResVo res) {
         try {
             TrHistVo hist = new TrHistVo();
-            hist.setTrNo(res.getTrNo() == null || res.getTrNo().isEmpty()
-                         ? "F" + System.currentTimeMillis() : res.getTrNo());
+            hist.setTrNo(res.getTrNo() == null || res.getTrNo().trim().isEmpty()
+                    ? makeTempTrNo() : res.getTrNo().trim());
             hist.setBankCode(vo.getBankCode());
             hist.setBranchCode(vo.getBranchCode());
             hist.setEmpNo(vo.getEmpNo());
@@ -86,4 +86,12 @@ public class DepositService {
         if (s == null || s.trim().isEmpty()) return 0;
         return Long.parseLong(s.trim());
     }
+    
+    /** 실패 거래용 임시 거래번호 (12자리) */
+    private String makeTempTrNo() {
+        String ms = String.valueOf(System.currentTimeMillis());
+        return "F" + ms.substring(ms.length() - 11);
+    }
+    
+    
 }
