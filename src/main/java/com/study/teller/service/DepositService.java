@@ -1,5 +1,6 @@
 package com.study.teller.service;
 
+import com.study.teller.common.BizException;
 import com.study.teller.common.MsgUtil;
 import com.study.teller.msg.DepositMsg;
 import com.study.teller.sender.MsgSender;
@@ -28,8 +29,9 @@ public class DepositService {
         DepositResVo res = DepositMsg.unpack(resMsg);
 
         // 5. 응답코드 확인
+        // 5. 응답코드 확인
         if (!"0000".equals(res.getResCode())) {
-            throw new Exception("거래실패 : " + res.getResMsg());
+            throw new BizException(res.getResCode(), res.getResMsg());
         }
 
         return res;

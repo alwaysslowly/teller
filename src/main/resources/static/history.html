@@ -54,25 +54,29 @@ function fnSearch() {
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.onload = function() {
-        if (xhr.status == 200) {
-            var res = JSON.parse(xhr.responseText);
-            fnSetGrid(res);
-        } else {
-            alert("오류가 발생했습니다.");
-        }
-    };
+    if (xhr.status != 200) {
+        alert("서버 통신에 실패했습니다.");
+        return;
+    }
+    var res = JSON.parse(xhr.responseText);
+    if (!res.success) {
+        alert(res.message + "\n(" + res.code + ")");
+        return;
+    }
+    fnSetGrid(res.data);
+};
 
     xhr.send(JSON.stringify(param));
 }
 
 
 // ★ 그리드에 목록 뿌리기
-function fnSetGrid(res) {
+function fnSetGrid(data) {
 
     var tbody = document.getElementById("gridBody");
     tbody.innerHTML = "";                 // 기존 내용 지우기
 
-    var list = res.list;
+    var list = data.list;
 
     for (var i = 0; i < list.length; i++) {
 
@@ -89,7 +93,7 @@ function fnSetGrid(res) {
         tbody.appendChild(tr);
     }
 
-    document.getElementById("cntArea").innerText = "총 " + res.totalCount + "건";
+    document.getElementById("cntArea").innerText = "총 " + data.totalCount + "건";
 }
 
 

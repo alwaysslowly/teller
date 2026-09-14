@@ -48,14 +48,23 @@ function fnConfirm() {
 
     // 3. 응답이 오면 실행됨
     xhr.onload = function() {
-        if (xhr.status == 200) {
-            var res = JSON.parse(xhr.responseText);
-            fnSuccess(res);
-        } else {
-            alert("오류가 발생했습니다.");
-        }
-    };
 
+    if (xhr.status != 200) {
+        alert("서버 통신에 실패했습니다.");
+        return;
+    }
+
+    var res = JSON.parse(xhr.responseText);
+
+    // ★ 업무 실패
+    if (!res.success) {
+        alert(res.message + "\n(" + res.code + ")");
+        return;
+    }
+
+    // 성공
+    fnSuccess(res.data);
+    };
     xhr.send(JSON.stringify(param));
 }
 

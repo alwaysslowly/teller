@@ -13,7 +13,7 @@ public class MsgSender {
 
         String resMsg;
         if ("DEP0001".equals(trCode)) {
-            resMsg = makeDepositRes();
+            resMsg = makeDepositRes(reqMsg);
         } else if ("INQ0001".equals(trCode)) {
             resMsg = makeInquiryRes();
         } else if ("DEP0002".equals(trCode)) {     // ← 추가
@@ -32,12 +32,28 @@ public class MsgSender {
     }
 
     /** 입금 응답 */
-    private static String makeDepositRes() throws Exception {
+    private static String makeDepositRes(String reqMsg) throws Exception {
+
+        // 요청전문에서 금액을 꺼낸다 (73번째부터 15자리)
+        String amtStr = MsgUtil.cut(reqMsg, 73, 15).trim();
+        long amount = Long.parseLong(amtStr);
+
         StringBuilder sb = new StringBuilder();
         sb.append(MsgUtil.padStr("DEP0001", 8));
+
+        // ★ 100만원 초과면 한도초과로 실패
+        if (amount > 1000000) {
+            sb.append(MsgUtil.padStr("E004", 4));
+            sb.append(MsgUtil.padStr("일일 한도를 초과했습니다", 40));
+            sb.append(MsgUtil.padNum("0", 15));
+            sb.append(MsgUtil.padStr("", 12));
+            return addLength(sb.toString());
+        }
+
+        // 정상
         sb.append(MsgUtil.padStr("0000", 4));
         sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
-        sb.append(MsgUtil.padNum("1150000", 15));
+        sb.append(MsgUtil.padNum(String.valueOf(1000000 + amount), 15));
         sb.append(MsgUtil.padStr("TR2026091001", 12));
         return addLength(sb.toString());
     }
