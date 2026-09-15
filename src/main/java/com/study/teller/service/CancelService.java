@@ -22,6 +22,9 @@ public class CancelService {
     private TrHistMapper trHistMapper;
 
     public DepositResVo cancel(CancelReqVo vo) throws Exception {
+    	
+        // 권한 확인
+        SessionUtil.checkManager();
 
         // 0. 검증
         Validator.required(vo.getOrgTrNo(), "원거래번호");

@@ -66,6 +66,14 @@ var gSelected = null;
 
 window.onload = function() {
     fnCheckSession(function() {
+
+        // 책임자가 아니면 접근 불가
+        if (gEmp.authLv != "09") {
+            alert("책임자만 사용할 수 있는 화면입니다.");
+            location.href = "/deposit.html";
+            return;
+        }
+
         fnLoadCode("CNCL_RSN", "cancelRsn");
     });
 };

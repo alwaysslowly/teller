@@ -35,4 +35,13 @@ public class SessionUtil {
 
         return emp;
     }
+    
+    /** 책임자 권한 확인 */
+    public static void checkManager() {
+        EmpVo emp = getEmp();
+        if (!AuthLevel.MANAGER.equals(emp.getAuthLv())) {
+            throw new BizException("A001", "책임자 권한이 필요합니다.");
+        }
+    }
+    
 }
