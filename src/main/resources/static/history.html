@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>거래내역조회</title>
+    <script src="/common.js"></script>
     <style>
         body { font-family: 맑은 고딕; font-size: 13px; }
         table { border-collapse: collapse; margin-top: 10px; }
@@ -17,6 +18,7 @@
 </head>
 <body>
 
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
 <h3>거래내역조회</h3>
 
 <div>
@@ -69,20 +71,21 @@ function fnSearch() {
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.onload = function() {
-    if (xhr.status != 200) {
-        alert("서버 통신에 실패했습니다.");
-        return;
-    }
-    var res = JSON.parse(xhr.responseText);
-    if (!res.success) {
-        alert(res.message + "\n(" + res.code + ")");
-        return;
-    }
-    fnSetGrid(res.data);
-};
+    fnHandleRes(xhr, function(data) {
+        fnSetGrid(data);
+    });
+    };
 
     xhr.send(JSON.stringify(param));
 }
+
+
+
+
+
+
+
+
 
 
 // ★ 그리드에 목록 뿌리기
@@ -115,24 +118,6 @@ function fnSetGrid(data) {
 }
 
 
-// ===== 표시용 변환 =====
-
-function fnAmountFormat(amt) {
-    if (!amt) return "0";
-    var num = String(Number(amt));
-    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function fnDateFormat(dt) {
-    if (!dt || dt.length != 8) return dt;
-    return dt.substr(0,4) + "-" + dt.substr(4,2) + "-" + dt.substr(6,2);
-}
-
-function fnTimeFormat(tm) {
-    if (!tm || tm.length != 6) return tm;
-    return tm.substr(0,2) + ":" + tm.substr(2,2) + ":" + tm.substr(4,2);
-}
-
 // ★ 행 클릭
 function fnRowClick(rowIdx) {
     return function() {
@@ -153,11 +138,13 @@ function fnRowClick(rowIdx) {
         document.getElementById("dtAmount").innerText  = fnAmountFormat(item.amount) + "원";
         document.getElementById("dtBalance").innerText = fnAmountFormat(item.balance) + "원";
 
-        document.getElementById("detail").style.display = "";
+        document.getElementById("detail").style.display = "block";
     };
 }
 
-
+window.onload = function() {
+    fnCheckSession();
+};
 
 
 </script>

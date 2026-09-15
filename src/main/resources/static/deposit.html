@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>입금</title>
+    <script src="/common.js"></script>
 </head>
 <body>
 
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
 <h2>입금</h2>
 
 <div>
@@ -55,16 +57,9 @@ function fnConfirm() {
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.onload = function() {
-        if (xhr.status != 200) {
-            alert("서버 통신에 실패했습니다.");
-            return;
-        }
-        var res = JSON.parse(xhr.responseText);
-        if (!res.success) {
-            alert(res.message + "\n(" + res.code + ")");
-            return;
-        }
-        fnSuccess(res.data);
+    fnHandleRes(xhr, function(data) {
+    fnSuccess(data);
+        });
     };
 
     xhr.send(JSON.stringify(param));
@@ -119,19 +114,8 @@ function fnNumeric(el, name) {
     return true;
 }
 
-// 금액 포맷 : 000000001150000 → 1,150,000
-function fnAmountFormat(amt) {
-    if (!amt) return "0";
-    
-    // 앞의 0 제거
-    var num = String(Number(amt));
-    
-    // 3자리마다 콤마
-    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
 
-
-// 4. 성공 처리
+// 3. 성공 처리
 function fnSuccess(res) {
     document.getElementById("result").innerText =
         "응답코드   : " + res.resCode + "\n" +
@@ -142,39 +126,15 @@ function fnSuccess(res) {
 
 // 화면이 열릴 때 실행
 window.onload = function() {
-    fnLoadCode("BANK", "bankCode");
+    fnCheckSession(function() {
+        fnLoadCode("BANK", "bankCode");
+    });
 };
 
 
-// 공통코드를 셀렉트박스에 채우기
-function fnLoadCode(grpCode, elId) {
 
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "/code?grpCode=" + grpCode, true);
-    
-    xhr.onload = function() {
-    if (xhr.status != 200) {
-        alert("공통코드 조회에 실패했습니다.");
-        return;
-    }
 
-        var res = JSON.parse(xhr.responseText);
-        if (!res.success) return;
 
-        var sel = document.getElementById(elId);
-        sel.innerHTML = "";
-
-        var list = res.data;
-        for (var i = 0; i < list.length; i++) {
-            var opt = document.createElement("option");
-            opt.value = list[i].code;
-            opt.text  = list[i].codeNm;
-            sel.appendChild(opt);
-        }
-    };
-
-    xhr.send();
-}
 
 </script>
 

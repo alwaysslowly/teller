@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>거래취소</title>
+<script src="/common.js"></script>
 <style>
     body { font-family: 맑은 고딕; font-size: 13px; }
     table { border-collapse: collapse; margin-top: 10px; }
@@ -17,7 +18,7 @@
 </style>
 </head>
 <body>
-
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
 <h3>거래취소</h3>
 
 <div>
@@ -64,7 +65,9 @@ var gSelected = null;
 
 
 window.onload = function() {
-    fnLoadCode("CNCL_RSN", "cancelRsn");
+    fnCheckSession(function() {
+        fnLoadCode("CNCL_RSN", "cancelRsn");
+    });
 };
 
 
@@ -81,16 +84,9 @@ function fnSearch() {
     xhr.open("GET", "/hist?acctNo=" + acctNo, true);
 
     xhr.onload = function() {
-        if (xhr.status != 200) {
-            alert("서버 통신에 실패했습니다.");
-            return;
-        }
-        var res = JSON.parse(xhr.responseText);
-        if (!res.success) {
-            alert(res.message);
-            return;
-        }
-        fnSetGrid(res.data);
+    fnHandleRes(xhr, function(data) {
+        fnSetGrid(data);
+    });
     };
 
     xhr.send();
@@ -175,68 +171,18 @@ function fnCancel() {
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.onload = function() {
-        if (xhr.status != 200) {
-            alert("서버 통신에 실패했습니다.");
-            return;
-        }
-        var res = JSON.parse(xhr.responseText);
-        if (!res.success) {
-            alert(res.message + "\n(" + res.code + ")");
-            return;
-        }
-
-        var d = res.data;
+    fnHandleRes(xhr, function(d) {
         document.getElementById("result").innerText =
             "취소가 완료되었습니다.\n" +
             "취소거래번호 : " + d.trNo + "\n" +
             "거래후잔액   : " + fnAmountFormat(d.balance) + "원";
-
-        fnSearch();   // 목록 갱신
-    };
+        fnSearch();
+    });
+};
 
     xhr.send(JSON.stringify(param));
 }
 
-
-// 공통코드 채우기
-function fnLoadCode(grpCode, elId) {
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "/code?grpCode=" + grpCode, true);
-
-    xhr.onload = function() {
-        if (xhr.status != 200) {
-            alert("공통코드 조회에 실패했습니다.");
-            return;
-        }
-        var res = JSON.parse(xhr.responseText);
-        if (!res.success) return;
-
-        var sel = document.getElementById(elId);
-        sel.innerHTML = "";
-
-        var list = res.data;
-        for (var i = 0; i < list.length; i++) {
-            var opt = document.createElement("option");
-            opt.value = list[i].code;
-            opt.text  = list[i].codeNm;
-            sel.appendChild(opt);
-        }
-    };
-
-    xhr.send();
-}
-
-
-function fnAmountFormat(amt) {
-    if (!amt) return "0";
-    return String(Number(amt)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function fnDateFormat(dt) {
-    if (!dt || dt.length != 8) return dt;
-    return dt.substr(0,4) + "-" + dt.substr(4,2) + "-" + dt.substr(6,2);
-}
 
 </script>
 
