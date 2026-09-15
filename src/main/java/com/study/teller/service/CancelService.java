@@ -4,12 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.study.teller.common.BizException;
+import com.study.teller.common.DateUtil;
+import com.study.teller.common.SessionUtil;
 import com.study.teller.common.Validator;
 import com.study.teller.mapper.TrHistMapper;
 import com.study.teller.msg.CancelMsg;
 import com.study.teller.sender.MsgSender;
 import com.study.teller.vo.CancelReqVo;
 import com.study.teller.vo.DepositResVo;
+import com.study.teller.vo.EmpVo;
 import com.study.teller.vo.TrHistVo;
 
 @Service
@@ -25,12 +28,15 @@ public class CancelService {
         Validator.required(vo.getCancelRsn(), "취소사유");
 
         // 1. 공통부
+        EmpVo emp = SessionUtil.getEmp();
+
         vo.setTrCode("DEP0002");
-        vo.setBankCode("012");
-        vo.setBranchCode("0001");
-        vo.setEmpNo("E12345");
-        vo.setTrDate("20260910");
-        vo.setTrTime("104800");
+        vo.setBankCode(emp.getBankCode());
+        vo.setBranchCode(emp.getBranchCode());
+        vo.setEmpNo(emp.getEmpNo());
+        vo.setTrDate(DateUtil.getToday());
+        vo.setTrTime(DateUtil.getNow());
+
 
         // 2~4
         String reqMsg = CancelMsg.pack(vo);

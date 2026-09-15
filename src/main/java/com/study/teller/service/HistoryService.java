@@ -1,9 +1,12 @@
 package com.study.teller.service;
 
 import com.study.teller.common.BizException;
+import com.study.teller.common.DateUtil;
+import com.study.teller.common.SessionUtil;
 import com.study.teller.common.Validator;
 import com.study.teller.msg.HistoryMsg;
 import com.study.teller.sender.MsgSender;
+import com.study.teller.vo.EmpVo;
 import com.study.teller.vo.HistoryReqVo;
 import com.study.teller.vo.HistoryResVo;
 
@@ -22,13 +25,16 @@ public class HistoryService {
         }
 
         // 1. 공통부 채우기
-        vo.setTrCode("INQ0002");
-        vo.setBankCode("012");
-        vo.setBranchCode("0001");
-        vo.setEmpNo("E12345");
-        vo.setTrDate("20260910");
-        vo.setTrTime("104800");
+        EmpVo emp = SessionUtil.getEmp();
 
+        vo.setTrCode("INQ0002");
+        vo.setBankCode(emp.getBankCode());
+        vo.setBranchCode(emp.getBranchCode());
+        vo.setEmpNo(emp.getEmpNo());
+        vo.setTrDate(DateUtil.getToday());
+        vo.setTrTime(DateUtil.getNow());
+        
+ 
         // 2. 전문 만들기
         String reqMsg = HistoryMsg.pack(vo);
 

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>로그인</title>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 6px 10px; }
+    th { background: #eee; }
+</style>
+</head>
+<body>
+
+<h3>통합단말 로그인</h3>
+
+<table>
+    <tr><th>직원번호</th><td><input type="text" id="empNo" value="E12345"></td></tr>
+    <tr><th>비밀번호</th><td><input type="password" id="passwd" value="1234"></td></tr>
+</table>
+<br>
+<button onclick="fnLogin()">로그인</button>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+function fnLogin() {
+
+    var empNo  = document.getElementById("empNo");
+    var passwd = document.getElementById("passwd");
+
+    if (!empNo.value) { alert("직원번호를 입력하세요."); empNo.focus(); return; }
+    if (!passwd.value) { alert("비밀번호를 입력하세요."); passwd.focus(); return; }
+
+    var param = { empNo : empNo.value, passwd : passwd.value };
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/login", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        if (xhr.status != 200) {
+            alert("서버 통신에 실패했습니다.");
+            return;
+        }
+        var res = JSON.parse(xhr.responseText);
+        if (!res.success) {
+            alert(res.message);
+            passwd.value = "";
+            passwd.focus();
+            return;
+        }
+
+        var d = res.data;
+        document.getElementById("result").innerText =
+            "로그인 성공\n" +
+            "직원 : " + d.empNm + " (" + d.empNo + ")\n" +
+            "은행 : " + d.bankCode + "\n" +
+            "영업점 : " + d.branchCode;
+
+        setTimeout(function() {
+            location.href = "/deposit.html";
+        }, 800);
+    };
+
+    xhr.send(JSON.stringify(param));
+}
+
+</script>
+
+</body>
+</html>

@@ -4,12 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.study.teller.common.BizException;
+import com.study.teller.common.SessionUtil;
+import com.study.teller.common.DateUtil;
 import com.study.teller.common.Validator;
 import com.study.teller.mapper.TrHistMapper;
 import com.study.teller.msg.DepositMsg;
 import com.study.teller.sender.MsgSender;
 import com.study.teller.vo.DepositReqVo;
 import com.study.teller.vo.DepositResVo;
+import com.study.teller.vo.EmpVo;
 import com.study.teller.vo.TrHistVo;
 
 @Service
@@ -30,11 +33,14 @@ public class DepositService {
         Validator.required(vo.getBankCode(), "은행");
 
         // 1. 공통부 채우기
+        EmpVo emp = SessionUtil.getEmp();
+
         vo.setTrCode("DEP0001");
-        vo.setBranchCode("0001");
-        vo.setEmpNo("E12345");
-        vo.setTrDate("20260910");
-        vo.setTrTime("104800");
+        vo.setBankCode(emp.getBankCode());
+        vo.setBranchCode(emp.getBranchCode());
+        vo.setEmpNo(emp.getEmpNo());
+        vo.setTrDate(DateUtil.getToday());
+        vo.setTrTime(DateUtil.getNow());
 
         // 2. 전문 만들기
         String reqMsg = DepositMsg.pack(vo);
