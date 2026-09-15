@@ -27,10 +27,10 @@ public class DepositService {
         Validator.required(vo.getCustNm(), "고객명");
         Validator.maxLength(vo.getCustNm(), 10, "고객명");
         Validator.positive(vo.getAmount(), "입금금액");
+        Validator.required(vo.getBankCode(), "은행");
 
         // 1. 공통부 채우기
         vo.setTrCode("DEP0001");
-        vo.setBankCode("012");
         vo.setBranchCode("0001");
         vo.setEmpNo("E12345");
         vo.setTrDate("20260910");

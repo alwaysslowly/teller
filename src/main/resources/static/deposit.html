@@ -9,6 +9,11 @@
 <h2>입금</h2>
 
 <div>
+    <label>은행</label>
+    <select id="bankCode"></select>
+</div>
+
+<div>
     <label>계좌번호</label>
     <input type="text" id="acctNo" value="1234567890">
 </div>
@@ -38,6 +43,7 @@ function fnConfirm() {
 
     // 2. 값 꺼내기
     var param = {
+        bankCode : document.getElementById("bankCode").value,
         acctNo : document.getElementById("acctNo").value,
         custNm : document.getElementById("custNm").value,
         amount : document.getElementById("amount").value
@@ -68,10 +74,15 @@ function fnConfirm() {
 // ★ 화면 검증
 function fnValidate() {
 
+    var bankCode = document.getElementById("bankCode");
     var acctNo = document.getElementById("acctNo");
     var custNm = document.getElementById("custNm");
     var amount = document.getElementById("amount");
 
+    if (!bankCode.value) {
+        alert("은행 목록을 불러오지 못했습니다. 새로고침 후 다시 시도하세요.");
+        return false;
+    }
     if (!fnRequired(acctNo, "계좌번호")) return false;
     if (!fnNumeric(acctNo, "계좌번호"))  return false;
 
@@ -127,6 +138,42 @@ function fnSuccess(res) {
         "응답메시지 : " + res.resMsg + "\n" +
 		"거래후잔액 : " + fnAmountFormat(res.balance) + "원\n" +
 	    "거래번호   : " + res.trNo;
+}
+
+// 화면이 열릴 때 실행
+window.onload = function() {
+    fnLoadCode("BANK", "bankCode");
+};
+
+
+// 공통코드를 셀렉트박스에 채우기
+function fnLoadCode(grpCode, elId) {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/code?grpCode=" + grpCode, true);
+    
+    xhr.onload = function() {
+    if (xhr.status != 200) {
+        alert("공통코드 조회에 실패했습니다.");
+        return;
+    }
+
+        var res = JSON.parse(xhr.responseText);
+        if (!res.success) return;
+
+        var sel = document.getElementById(elId);
+        sel.innerHTML = "";
+
+        var list = res.data;
+        for (var i = 0; i < list.length; i++) {
+            var opt = document.createElement("option");
+            opt.value = list[i].code;
+            opt.text  = list[i].codeNm;
+            sel.appendChild(opt);
+        }
+    };
+
+    xhr.send();
 }
 
 </script>
