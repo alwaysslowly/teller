@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>거래취소</title>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 5px 10px; }
+    th { background: #eee; }
+    .num { text-align: right; }
+    .center { text-align: center; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover { background: #f5f5f5; }
+    tbody tr.on { background: #dde8f0; }
+    #cancelArea { margin-top: 18px; display: none; }
+</style>
+</head>
+<body>
+
+<h3>거래취소</h3>
+
+<div>
+    계좌번호 <input type="text" id="acctNo" value="1234567890">
+    <button onclick="fnSearch()">조회</button>
+</div>
+
+<div id="cntArea"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>거래번호</th>
+            <th>일자</th>
+            <th>거래구분</th>
+            <th>거래금액</th>
+            <th>상태</th>
+        </tr>
+    </thead>
+    <tbody id="gridBody"></tbody>
+</table>
+
+<div id="cancelArea">
+    <b>선택한 거래</b>
+    <table>
+        <tr><th>거래번호</th><td id="dtTrNo"></td></tr>
+        <tr><th>거래금액</th><td class="num" id="dtAmount"></td></tr>
+        <tr>
+            <th>취소사유</th>
+            <td><select id="cancelRsn"></select></td>
+        </tr>
+    </table>
+    <br>
+    <button onclick="fnCancel()">취소 실행</button>
+</div>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+var gList = [];
+var gSelected = null;
+
+
+window.onload = function() {
+    fnLoadCode("CNCL_RSN", "cancelRsn");
+};
+
+
+// 거래 조회
+function fnSearch() {
+
+    var acctNo = document.getElementById("acctNo").value;
+    if (!acctNo) {
+        alert("계좌번호를 입력하세요.");
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/hist?acctNo=" + acctNo, true);
+
+    xhr.onload = function() {
+        if (xhr.status != 200) {
+            alert("서버 통신에 실패했습니다.");
+            return;
+        }
+        var res = JSON.parse(xhr.responseText);
+        if (!res.success) {
+            alert(res.message);
+            return;
+        }
+        fnSetGrid(res.data);
+    };
+
+    xhr.send();
+}
+
+
+// 그리드 채우기
+function fnSetGrid(list) {
+
+    var tbody = document.getElementById("gridBody");
+    tbody.innerHTML = "";
+    document.getElementById("cancelArea").style.display = "none";
+    gSelected = null;
+    gList = list;
+
+    for (var i = 0; i < gList.length; i++) {
+
+        var item = gList[i];
+        var tr = document.createElement("tr");
+
+        var stat = ("0000" == item.resCode) ? "정상" : "실패";
+
+        tr.innerHTML =
+            "<td class='center'>" + item.trNo + "</td>" +
+            "<td class='center'>" + fnDateFormat(item.trDate) + "</td>" +
+            "<td class='center'>" + item.trCode + "</td>" +
+            "<td class='num'>" + fnAmountFormat(item.amount) + "</td>" +
+            "<td class='center'>" + stat + "</td>";
+
+        tr.onclick = fnRowClick(i);
+        tbody.appendChild(tr);
+    }
+
+    document.getElementById("cntArea").innerText = "총 " + gList.length + "건";
+}
+
+
+// 행 클릭
+function fnRowClick(rowIdx) {
+    return function() {
+
+        var item = gList[rowIdx];
+
+        // 실패 거래는 취소 불가
+        if ("0000" != item.resCode) {
+            alert("실패한 거래는 취소할 수 없습니다.");
+            return;
+        }
+
+        var rows = document.getElementById("gridBody").children;
+        for (var i = 0; i < rows.length; i++) rows[i].className = "";
+        rows[rowIdx].className = "on";
+
+        gSelected = item;
+
+        document.getElementById("dtTrNo").innerText   = item.trNo;
+        document.getElementById("dtAmount").innerText = fnAmountFormat(item.amount) + "원";
+        document.getElementById("cancelArea").style.display = "block";
+    };
+}
+
+
+// 취소 실행
+function fnCancel() {
+
+    if (gSelected == null) {
+        alert("취소할 거래를 선택하세요.");
+        return;
+    }
+
+    if (!confirm("거래번호 " + gSelected.trNo + " 를 취소하시겠습니까?")) {
+        return;
+    }
+
+    var param = {
+        orgTrNo   : gSelected.trNo,
+        cancelRsn : document.getElementById("cancelRsn").value
+    };
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/cancel", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        if (xhr.status != 200) {
+            alert("서버 통신에 실패했습니다.");
+            return;
+        }
+        var res = JSON.parse(xhr.responseText);
+        if (!res.success) {
+            alert(res.message + "\n(" + res.code + ")");
+            return;
+        }
+
+        var d = res.data;
+        document.getElementById("result").innerText =
+            "취소가 완료되었습니다.\n" +
+            "취소거래번호 : " + d.trNo + "\n" +
+            "거래후잔액   : " + fnAmountFormat(d.balance) + "원";
+
+        fnSearch();   // 목록 갱신
+    };
+
+    xhr.send(JSON.stringify(param));
+}
+
+
+// 공통코드 채우기
+function fnLoadCode(grpCode, elId) {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/code?grpCode=" + grpCode, true);
+
+    xhr.onload = function() {
+        if (xhr.status != 200) {
+            alert("공통코드 조회에 실패했습니다.");
+            return;
+        }
+        var res = JSON.parse(xhr.responseText);
+        if (!res.success) return;
+
+        var sel = document.getElementById(elId);
+        sel.innerHTML = "";
+
+        var list = res.data;
+        for (var i = 0; i < list.length; i++) {
+            var opt = document.createElement("option");
+            opt.value = list[i].code;
+            opt.text  = list[i].codeNm;
+            sel.appendChild(opt);
+        }
+    };
+
+    xhr.send();
+}
+
+
+function fnAmountFormat(amt) {
+    if (!amt) return "0";
+    return String(Number(amt)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function fnDateFormat(dt) {
+    if (!dt || dt.length != 8) return dt;
+    return dt.substr(0,4) + "-" + dt.substr(4,2) + "-" + dt.substr(6,2);
+}
+
+</script>
+
+</body>
+</html>

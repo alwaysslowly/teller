@@ -1,8 +1,14 @@
 package com.study.teller.sender;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.study.teller.common.MsgUtil;
 
 public class MsgSender {
+	
+    /** 이미 취소된 거래번호 (스텁용) */
+    private static Set<String> cancelledSet = new HashSet<>();
 
     public static String send(String reqMsg) throws Exception {
 
@@ -17,9 +23,7 @@ public class MsgSender {
         } else if ("INQ0001".equals(trCode)) {
             resMsg = makeInquiryRes();
         } else if ("DEP0002".equals(trCode)) {     // ← 추가
-            resMsg = makeCancelRes();              // ← 추가
-        } else if ("DEP0002".equals(trCode)) {
-            resMsg = makeCancelRes();
+        	resMsg = makeCancelRes(reqMsg);        // ← 추가
         } else if ("INQ0002".equals(trCode)) {     // ← 추가
             resMsg = makeHistoryRes();             // ← 추가
         } 
@@ -78,13 +82,30 @@ public class MsgSender {
     }
     
     /** 입금취소 응답 */
-    private static String makeCancelRes() throws Exception {
+    private static String makeCancelRes(String reqMsg) throws Exception {
+
+        // 요청전문에서 원거래번호를 꺼낸다 (39번째부터 12자리)
+        String orgTrNo = MsgUtil.cut(reqMsg, 39, 12).trim();
+
         StringBuilder sb = new StringBuilder();
         sb.append(MsgUtil.padStr("DEP0002", 8));
+
+        // 이미 취소된 거래인지 확인
+        if (cancelledSet.contains(orgTrNo)) {
+            sb.append(MsgUtil.padStr("E010", 4));
+            sb.append(MsgUtil.padStr("이미 취소된 거래입니다", 40));
+            sb.append(MsgUtil.padNum("0", 15));
+            sb.append(MsgUtil.padStr("", 12));
+            return addLength(sb.toString());
+        }
+
+        // 취소 처리
+        cancelledSet.add(orgTrNo);
+
         sb.append(MsgUtil.padStr("0000", 4));
         sb.append(MsgUtil.padStr("취소처리되었습니다", 40));
-        sb.append(MsgUtil.padNum("1000000", 15));        // 취소 후 잔액
-        sb.append(MsgUtil.padStr("TR2026091002", 12));   // 취소거래의 거래번호
+        sb.append(MsgUtil.padNum("1000000", 15));
+        sb.append(MsgUtil.padStr(nextTrNo(), 12));
         return addLength(sb.toString());
     }
     
