@@ -1,5 +1,7 @@
 package com.study.teller.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.study.teller.common.DateUtil;
 import com.study.teller.common.SessionUtil;
 import com.study.teller.msg.InquiryMsg;
@@ -10,6 +12,9 @@ import com.study.teller.vo.InquiryResVo;
 
 public class InquiryService {
 
+    @Autowired
+    private BizDateService bizDateService;   
+
     public InquiryResVo inquiry(InquiryReqVo vo) throws Exception {
 
         // 1. 공통부 채우기
@@ -19,7 +24,7 @@ public class InquiryService {
         vo.setBankCode(emp.getBankCode());
         vo.setBranchCode(emp.getBranchCode());
         vo.setEmpNo(emp.getEmpNo());
-        vo.setTrDate(DateUtil.getToday());
+        vo.setTrDate(bizDateService.getBizDate());
         vo.setTrTime(DateUtil.getNow());
         
         // 2. 전문 만들기

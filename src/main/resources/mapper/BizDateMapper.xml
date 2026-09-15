@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.teller.mapper.BizDateMapper">
+
+    <select id="selectBizDate" parameterType="string"
+            resultType="com.study.teller.vo.BizDateVo">
+        SELECT BASE_DATE, BIZ_YN, CLOSE_YN, HOLIDAY_NM
+          FROM TB_BIZ_DATE
+         WHERE BASE_DATE = #{baseDate}
+    </select>
+
+    <select id="selectNextBizDate" parameterType="string"
+            resultType="string">
+        SELECT MIN(BASE_DATE)
+          FROM TB_BIZ_DATE
+         <![CDATA[ WHERE BASE_DATE > #{baseDate} ]]>
+           AND BIZ_YN = 'Y'
+    </select>
+
+</mapper>

@@ -19,6 +19,10 @@ import com.study.teller.vo.TrHistVo;
 public class CancelService {
 
     @Autowired
+    private BizDateService bizDateService;   
+
+	
+	@Autowired
     private TrHistMapper trHistMapper;
 
     public DepositResVo cancel(CancelReqVo vo) throws Exception {
@@ -37,7 +41,7 @@ public class CancelService {
         vo.setBankCode(emp.getBankCode());
         vo.setBranchCode(emp.getBranchCode());
         vo.setEmpNo(emp.getEmpNo());
-        vo.setTrDate(DateUtil.getToday());
+        vo.setTrDate(bizDateService.getBizDate());
         vo.setTrTime(DateUtil.getNow());
 
 

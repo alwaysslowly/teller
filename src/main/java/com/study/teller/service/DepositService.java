@@ -20,6 +20,10 @@ public class DepositService {
 
     @Autowired
     private TrHistMapper trHistMapper;
+    
+    @Autowired
+    private BizDateService bizDateService;   
+
 
     public DepositResVo deposit(DepositReqVo vo) throws Exception {
 
@@ -30,7 +34,6 @@ public class DepositService {
         Validator.required(vo.getCustNm(), "고객명");
         Validator.maxLength(vo.getCustNm(), 10, "고객명");
         Validator.positive(vo.getAmount(), "입금금액");
-        Validator.required(vo.getBankCode(), "은행");
 
         // 1. 공통부 채우기
         EmpVo emp = SessionUtil.getEmp();
@@ -39,7 +42,7 @@ public class DepositService {
         vo.setBankCode(emp.getBankCode());
         vo.setBranchCode(emp.getBranchCode());
         vo.setEmpNo(emp.getEmpNo());
-        vo.setTrDate(DateUtil.getToday());
+        vo.setTrDate(bizDateService.getBizDate());
         vo.setTrTime(DateUtil.getNow());
 
         // 2. 전문 만들기

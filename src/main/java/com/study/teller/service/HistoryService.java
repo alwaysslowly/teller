@@ -1,5 +1,7 @@
 package com.study.teller.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.study.teller.common.BizException;
 import com.study.teller.common.DateUtil;
 import com.study.teller.common.SessionUtil;
@@ -11,6 +13,11 @@ import com.study.teller.vo.HistoryReqVo;
 import com.study.teller.vo.HistoryResVo;
 
 public class HistoryService {
+	
+
+    @Autowired
+    private BizDateService bizDateService;   
+
 
     public HistoryResVo history(HistoryReqVo vo) throws Exception {
     	
@@ -31,7 +38,7 @@ public class HistoryService {
         vo.setBankCode(emp.getBankCode());
         vo.setBranchCode(emp.getBranchCode());
         vo.setEmpNo(emp.getEmpNo());
-        vo.setTrDate(DateUtil.getToday());
+        vo.setTrDate(bizDateService.getBizDate());
         vo.setTrTime(DateUtil.getNow());
         
  
