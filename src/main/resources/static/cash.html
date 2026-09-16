@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>시재마감</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 7px 12px; }
+    th { background: #eee; width: 120px; text-align: left; }
+    td { text-align: right; width: 160px; }
+    .book { background: #eef3f8; font-weight: bold; }
+    .diff { font-weight: bold; }
+    .plus  { color: #1F5D4C; }
+    .minus { color: #A32E28; }
+    #closed { margin-top: 14px; color: #1F5D4C; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>시재마감</h3>
+
+<table>
+    <tr><th>시작 시재</th>   <td id="startAmt">-</td></tr>
+    <tr><th>입금 합계</th>   <td id="inAmt">-</td></tr>
+    <tr><th>출금 합계</th>   <td id="outAmt">-</td></tr>
+    <tr class="book"><th>장부상 현금</th><td id="bookAmt">-</td></tr>
+    <tr><th>실제 현금</th>
+        <td><input type="text" id="realAmt" style="width:150px; text-align:right;"
+                   onkeyup="fnCalcDiff()"></td></tr>
+    <tr><th>차액</th><td class="diff" id="diffAmt">-</td></tr>
+</table>
+
+<br>
+<button onclick="fnLoad()">새로고침</button>
+<button onclick="fnClose()">마감</button>
+
+<div id="closed"></div>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+var gBookAmt = 0;
+
+
+window.onload = function() {
+    fnCheckSession(function() {
+        fnLoad();
+    });
+};
+
+
+/** 시재 현황 조회 */
+function fnLoad() {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/cash", true);
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+
+            gBookAmt = d.bookAmt;
+
+            document.getElementById("startAmt").innerText = fnAmountFormat(d.startAmt) + "원";
+            document.getElementById("inAmt").innerText    = fnAmountFormat(d.inAmt) + "원";
+            document.getElementById("outAmt").innerText   = fnAmountFormat(d.outAmt) + "원";
+            document.getElementById("bookAmt").innerText  = fnAmountFormat(d.bookAmt) + "원";
+
+            if ("Y" == d.closeYn) {
+                document.getElementById("realAmt").value = d.realAmt;
+                document.getElementById("realAmt").disabled = true;
+                document.getElementById("closed").innerText = "마감 완료된 상태입니다.";
+            } else {
+                document.getElementById("closed").innerText = "";
+            }
+
+            fnCalcDiff();
+        });
+    };
+
+    xhr.send();
+}
+
+
+/** 차액 계산 (입력할 때마다) */
+function fnCalcDiff() {
+
+    var el = document.getElementById("realAmt");
+    var td = document.getElementById("diffAmt");
+
+    if (!el.value) {
+        td.innerText = "-";
+        td.className = "diff";
+        return;
+    }
+
+    var diff = Number(el.value) - gBookAmt;
+
+    td.innerText = fnAmountFormat(diff) + "원";
+    td.className = "diff " + (diff == 0 ? "" : (diff > 0 ? "plus" : "minus"));
+}
+
+
+/** 마감 실행 */
+function fnClose() {
+
+    var el = document.getElementById("realAmt");
+
+    if (!el.value) {
+        alert("실제 현금을 입력하세요.");
+        el.focus();
+        return;
+    }
+    if (!/^[0-9]+$/.test(el.value)) {
+        alert("실제 현금은 숫자만 입력할 수 있습니다.");
+        el.focus(); el.select();
+        return;
+    }
+
+    var diff = Number(el.value) - gBookAmt;
+    if (diff != 0) {
+        alert("차액이 " + fnAmountFormat(diff) + "원 발생했습니다.\n원인을 확인한 후 마감하세요.");
+        return;
+    }
+
+    if (!confirm("마감하시겠습니까?\n마감 후에는 당일 거래가 익영업일로 처리됩니다.")) {
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/cash/close", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+            document.getElementById("result").innerText =
+                "마감이 완료되었습니다.\n" +
+                "실제 현금 : " + fnAmountFormat(d.realAmt) + "원";
+            fnLoad();
+        });
+    };
+
+    xhr.send(JSON.stringify({ realAmt : el.value }));
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.teller.mapper.CashMapper">
+
+    <select id="selectCash" parameterType="com.study.teller.vo.CashVo"
+            resultType="com.study.teller.vo.CashVo">
+        SELECT BASE_DATE, BRANCH_CODE, EMP_NO,
+               START_AMT, REAL_AMT, CLOSE_YN
+          FROM TB_CASH
+         WHERE BASE_DATE   = #{baseDate}
+           AND BRANCH_CODE = #{branchCode}
+           AND EMP_NO      = #{empNo}
+    </select>
+
+    <select id="selectTrSum" parameterType="com.study.teller.vo.CashVo"
+            resultType="com.study.teller.vo.CashVo">
+        SELECT NVL(SUM(CASE WHEN AMOUNT &gt; 0 THEN AMOUNT ELSE 0 END), 0) AS IN_AMT,
+               NVL(SUM(CASE WHEN AMOUNT &lt; 0 THEN -AMOUNT ELSE 0 END), 0) AS OUT_AMT
+          FROM TB_TR_HIST
+         WHERE TR_DATE     = #{baseDate}
+           AND BRANCH_CODE = #{branchCode}
+           AND EMP_NO      = #{empNo}
+           AND RES_CODE    = '0000'
+    </select>
+
+    <update id="updateClose" parameterType="com.study.teller.vo.CashVo">
+        UPDATE TB_CASH
+           SET REAL_AMT  = #{realAmt},
+               CLOSE_YN  = 'Y',
+               CLOSE_DTM = CURRENT_TIMESTAMP
+         WHERE BASE_DATE   = #{baseDate}
+           AND BRANCH_CODE = #{branchCode}
+           AND EMP_NO      = #{empNo}
+    </update>
+
+</mapper>

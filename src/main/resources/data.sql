@@ -34,3 +34,10 @@ INSERT INTO TB_MENU VALUES ('M001', '입금',     '/deposit.html', '01', 1, 'Y')
 INSERT INTO TB_MENU VALUES ('M002', '거래내역', '/history.html', '01', 2, 'Y');
 INSERT INTO TB_MENU VALUES ('M003', '거래취소', '/cancel.html',  '09', 3, 'Y');
 INSERT INTO TB_MENU VALUES ('M004', '출금', '/withdraw.html', '01', 4, 'Y');
+INSERT INTO TB_MENU VALUES ('M005', '시재마감', '/cash.html', '01', 5, 'Y');
+
+INSERT INTO TB_CASH (BASE_DATE, BRANCH_CODE, EMP_NO, START_AMT)
+VALUES ('20260916', '0001', 'E12345', 5000000);
+
+INSERT INTO TB_CASH (BASE_DATE, BRANCH_CODE, EMP_NO, START_AMT)
+VALUES ('20260916', '0001', 'E99999', 5000000);
