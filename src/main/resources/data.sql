@@ -33,3 +33,4 @@ INSERT INTO TB_BIZ_DATE VALUES ('20260921', 'Y', 'N', NULL);
 INSERT INTO TB_MENU VALUES ('M001', '입금',     '/deposit.html', '01', 1, 'Y');
 INSERT INTO TB_MENU VALUES ('M002', '거래내역', '/history.html', '01', 2, 'Y');
 INSERT INTO TB_MENU VALUES ('M003', '거래취소', '/cancel.html',  '09', 3, 'Y');
+INSERT INTO TB_MENU VALUES ('M004', '출금', '/withdraw.html', '01', 4, 'Y');

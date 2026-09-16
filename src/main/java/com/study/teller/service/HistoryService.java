@@ -1,6 +1,7 @@
 package com.study.teller.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.study.teller.common.BizException;
 import com.study.teller.common.DateUtil;
@@ -12,6 +13,7 @@ import com.study.teller.vo.EmpVo;
 import com.study.teller.vo.HistoryReqVo;
 import com.study.teller.vo.HistoryResVo;
 
+@Service
 public class HistoryService {
 	
 
@@ -53,7 +55,7 @@ public class HistoryService {
 
         // 5. 응답코드 확인
         if (!"0000".equals(res.getResCode())) {
-            throw new Exception("조회실패 : " + res.getResMsg());
+        	throw new BizException(res.getResCode(), res.getResMsg());
         }
 
         return res;

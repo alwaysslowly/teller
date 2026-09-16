@@ -1,5 +1,8 @@
 package com.study.teller.common;
 
+
+
+
 public class BizException extends RuntimeException {
 
     private String code;    // 응답코드

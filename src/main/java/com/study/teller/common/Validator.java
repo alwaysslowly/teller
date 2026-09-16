@@ -1,4 +1,4 @@
-package com.study.teller.common;
+ package com.study.teller.common;
 
 public class Validator {
 

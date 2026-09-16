@@ -26,11 +26,11 @@ public class MsgSender {
         	resMsg = makeCancelRes(reqMsg);        // ← 추가
         } else if ("INQ0002".equals(trCode)) {     // ← 추가
             resMsg = makeHistoryRes();             // ← 추가
-        } 
-        	else {
+        } else if ("WTD0001".equals(trCode)) {     // ← 추가
+            resMsg = makeWithdrawRes(reqMsg);      // ← 추가
+        } else {
             throw new Exception("알 수 없는 거래코드 : " + trCode);
         }
-
         System.out.println("<< 응답전문 : [" + resMsg + "]");
         return resMsg;
     }
@@ -147,4 +147,43 @@ public class MsgSender {
         int totalLen = MsgUtil.byteLength(body) + 4;
         return MsgUtil.padNum(String.valueOf(totalLen), 4) + body;
     }
+    
+    /** 출금 응답 */
+    private static String makeWithdrawRes(String reqMsg) throws Exception {
+
+        // 요청전문에서 값 꺼내기
+        String passwd = MsgUtil.cut(reqMsg, 53, 4).trim();
+        String amtStr = MsgUtil.cut(reqMsg, 57, 15).trim();
+        long amount = Long.parseLong(amtStr);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr("WTD0001", 8));
+
+        // 비밀번호 확인 (스텁: 1234만 정상)
+        if (!"1234".equals(passwd)) {
+            sb.append(MsgUtil.padStr("E005", 4));
+            sb.append(MsgUtil.padStr("비밀번호가 일치하지 않습니다", 40));
+            sb.append(MsgUtil.padNum("0", 15));
+            sb.append(MsgUtil.padStr("", 12));
+            return addLength(sb.toString());
+        }
+
+        // 잔액 확인 (스텁: 잔액 100만원 가정)
+        long balance = 1000000;
+        if (amount > balance) {
+            sb.append(MsgUtil.padStr("E002", 4));
+            sb.append(MsgUtil.padStr("잔액이 부족합니다", 40));
+            sb.append(MsgUtil.padNum(String.valueOf(balance), 15));
+            sb.append(MsgUtil.padStr("", 12));
+            return addLength(sb.toString());
+        }
+
+        // 정상
+        sb.append(MsgUtil.padStr("0000", 4));
+        sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
+        sb.append(MsgUtil.padNum(String.valueOf(balance - amount), 15));
+        sb.append(MsgUtil.padStr(nextTrNo(), 12));
+        return addLength(sb.toString());
+    }
+    
 }

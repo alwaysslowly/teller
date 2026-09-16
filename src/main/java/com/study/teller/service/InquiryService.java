@@ -1,6 +1,7 @@
 package com.study.teller.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.study.teller.common.DateUtil;
 import com.study.teller.common.SessionUtil;
@@ -10,6 +11,9 @@ import com.study.teller.vo.EmpVo;
 import com.study.teller.vo.InquiryReqVo;
 import com.study.teller.vo.InquiryResVo;
 
+
+
+@Service
 public class InquiryService {
 
     @Autowired
