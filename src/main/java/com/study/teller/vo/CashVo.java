@@ -5,6 +5,7 @@ public class CashVo {
     private String baseDate;
     private String branchCode;
     private String empNo;
+    private String empNm;      // 직원명
     private long   startAmt;      // 시작 시재
     private long   realAmt;       // 실제 현금
     private String closeYn;
@@ -23,7 +24,10 @@ public class CashVo {
 
     public String getEmpNo() { return empNo; }
     public void setEmpNo(String empNo) { this.empNo = empNo; }
-
+    
+    public String getEmpNm() { return empNm; }
+    public void setEmpNm(String empNm) { this.empNm = empNm; }
+    
     public long getStartAmt() { return startAmt; }
     public void setStartAmt(long startAmt) { this.startAmt = startAmt; }
 

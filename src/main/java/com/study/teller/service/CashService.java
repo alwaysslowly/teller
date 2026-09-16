@@ -1,12 +1,16 @@
 package com.study.teller.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.study.teller.common.BizException;
 import com.study.teller.common.DateUtil;
 import com.study.teller.common.SessionUtil;
+import com.study.teller.mapper.BizDateMapper;
 import com.study.teller.mapper.CashMapper;
+import com.study.teller.vo.BizDateVo;
 import com.study.teller.vo.CashVo;
 import com.study.teller.vo.EmpVo;
 
@@ -15,6 +19,9 @@ public class CashService {
 
     @Autowired
     private CashMapper cashMapper;
+    
+    @Autowired
+    private BizDateMapper bizDateMapper;
 
     /** 시재 현황 조회 */
     public CashVo getCash() {
@@ -80,4 +87,53 @@ public class CashService {
 
         return cash;
     }
+    
+    /** 영업점 마감 현황 조회 */
+    public List<CashVo> getBranchCashList() {
+
+        EmpVo emp = SessionUtil.getEmp();
+
+        CashVo param = new CashVo();
+        param.setBaseDate(DateUtil.getToday());
+        param.setBranchCode(emp.getBranchCode());
+
+        return cashMapper.selectBranchCashList(param);
+    }
+
+
+    /** 영업점 마감 */
+    public void closeBranch() {
+
+        // 1. 책임자 권한 확인
+        SessionUtil.checkManager();
+
+        // 2. 직원 마감 현황 확인
+        List<CashVo> list = getBranchCashList();
+
+        if (list.isEmpty()) {
+            throw new BizException("C004", "시재 정보가 없습니다.");
+        }
+
+        for (CashVo c : list) {
+            if (!"Y".equals(c.getCloseYn())) {
+                throw new BizException("C005",
+                    c.getEmpNm() + "(" + c.getEmpNo() + ") 직원이 아직 마감하지 않았습니다.");
+            }
+        }
+
+        // 3. 영업일 마감
+        String today = DateUtil.getToday();
+        BizDateVo biz = bizDateMapper.selectBizDate(today);
+
+        if (biz == null) {
+            throw new BizException("D001", "영업일 정보가 없습니다.");
+        }
+        if ("Y".equals(biz.getCloseYn())) {
+            throw new BizException("C006", "이미 영업점 마감이 완료되었습니다.");
+        }
+
+        cashMapper.updateBizClose(today);
+    }
+    
+    
 }

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>계좌목록</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 6px 12px; }
+    th { background: #eee; }
+    .num { text-align: right; }
+    .center { text-align: center; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover { background: #f5f5f5; }
+    .stop { color: #A32E28; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>계좌목록</h3>
+
+<div id="cntArea"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>계좌번호</th>
+            <th>고객명</th>
+            <th>상품명</th>
+            <th>잔액</th>
+            <th>상태</th>
+        </tr>
+    </thead>
+    <tbody id="gridBody"></tbody>
+</table>
+
+<br>
+<button onclick="fnLoad()">새로고침</button>
+
+<script>
+
+var gStatusMap = {};
+
+
+window.onload = function() {
+    fnCheckSession(function() {
+        fnLoadStatusCode();
+    });
+};
+
+
+/** 계좌상태 코드 → 이름 맵 만들고 목록 조회 */
+function fnLoadStatusCode() {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/code?grpCode=ACCT_ST", true);
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(list) {
+            for (var i = 0; i < list.length; i++) {
+                gStatusMap[list[i].code] = list[i].codeNm;
+            }
+            fnLoad();
+        });
+    };
+
+    xhr.send();
+}
+
+
+/** 계좌 목록 조회 */
+function fnLoad() {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/account/list", true);
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(list) {
+
+            var tbody = document.getElementById("gridBody");
+            tbody.innerHTML = "";
+
+            for (var i = 0; i < list.length; i++) {
+
+                var a = list[i];
+                var stNm = gStatusMap[a.acctStatus] || a.acctStatus;
+                var stop = ("01" != a.acctStatus);
+
+                var tr = document.createElement("tr");
+                tr.innerHTML =
+                    "<td class='center'>" + a.acctNo + "</td>" +
+                    "<td class='center'>" + a.custNm + "</td>" +
+                    "<td>" + a.prodNm + "</td>" +
+                    "<td class='num'>" + fnAmountFormat(a.balance) + "원</td>" +
+                    "<td class='center " + (stop ? "stop" : "") + "'>" + stNm + "</td>";
+
+                tr.onclick = fnRowClick(a.acctNo);
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById("cntArea").innerText = "총 " + list.length + "건";
+        });
+    };
+
+    xhr.send();
+}
+
+
+/** 행 클릭 → 계좌조회 화면으로 */
+function fnRowClick(acctNo) {
+    return function() {
+        location.href = "/inquiry.html?acctNo=" + acctNo;
+    };
+}
+
+</script>
+
+</body>
+</html>

@@ -27,4 +27,18 @@ public class CashController {
         long realAmt = Long.parseLong(param.get("realAmt"));
         return ApiResponse.ok(cashService.close(realAmt));
     }
+    
+    @GetMapping("/cash/branch")
+    public ApiResponse branchList() {
+        return ApiResponse.ok(cashService.getBranchCashList());
+    }
+
+    @PostMapping("/cash/branch/close")
+    public ApiResponse branchClose() {
+        cashService.closeBranch();
+        return ApiResponse.ok(null);
+    }
+    
+    
+    
 }

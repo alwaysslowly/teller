@@ -16,7 +16,8 @@ import com.study.teller.vo.HistoryResVo;
 @Service
 public class HistoryService {
 	
-
+    @Autowired
+    private MsgSender msgSender;
     @Autowired
     private BizDateService bizDateService;   
 
@@ -48,7 +49,7 @@ public class HistoryService {
         String reqMsg = HistoryMsg.pack(vo);
 
         // 3. 계정계 전송
-        String resMsg = MsgSender.send(reqMsg);
+        String resMsg = msgSender.send(reqMsg);
 
         // 4. 응답 해석
         HistoryResVo res = HistoryMsg.unpack(resMsg);

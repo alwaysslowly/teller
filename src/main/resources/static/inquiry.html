@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>계좌조회</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #999; padding: 7px 12px; }
+    th { background: #eee; width: 110px; text-align: left; }
+    td { width: 220px; }
+    .num { text-align: right; }
+    #info { display: none; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>계좌조회</h3>
+
+<div>
+    계좌번호 <input type="text" id="acctNo" value="1234567890">
+    <button onclick="fnSearch()">조회</button>
+</div>
+
+<div id="info">
+    <table>
+        <tr><th>계좌번호</th><td id="dtAcctNo"></td></tr>
+        <tr><th>고객명</th>  <td id="dtCustNm"></td></tr>
+        <tr><th>상품명</th>  <td id="dtProdNm"></td></tr>
+        <tr><th>잔액</th>    <td class="num" id="dtBalance"></td></tr>
+        <tr><th>계좌상태</th><td id="dtStatus"></td></tr>
+    </table>
+</div>
+
+<script>
+
+var gStatusMap = {};
+
+
+window.onload = function() {
+    fnCheckSession(function() {
+        fnLoadStatusCode();
+    });
+};
+
+
+/** 계좌상태 코드를 미리 받아둔다 */
+function fnLoadStatusCode() {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/code?grpCode=ACCT_ST", true);
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(list) {
+            for (var i = 0; i < list.length; i++) {
+                gStatusMap[list[i].code] = list[i].codeNm;
+            }
+        });
+    };
+
+    xhr.send();
+}
+
+
+function fnSearch() {
+
+    var el = document.getElementById("acctNo");
+
+    if (!el.value) {
+        alert("계좌번호를 입력하세요.");
+        el.focus();
+        return;
+    }
+    if (!/^[0-9]+$/.test(el.value)) {
+        alert("계좌번호는 숫자만 입력할 수 있습니다.");
+        el.focus(); el.select();
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/inquiry", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+
+            document.getElementById("dtAcctNo").innerText  = d.acctNo;
+            document.getElementById("dtCustNm").innerText  = d.custNm;
+            document.getElementById("dtProdNm").innerText  = d.prodNm;
+            document.getElementById("dtBalance").innerText = fnAmountFormat(d.balance) + "원";
+            document.getElementById("dtStatus").innerText  =
+                (gStatusMap[d.acctStatus] || d.acctStatus);
+
+            document.getElementById("info").style.display = "block";
+        });
+    };
+
+    xhr.send(JSON.stringify({ acctNo : el.value }));
+}
+
+</script>
+
+</body>
+</html>

@@ -15,6 +15,8 @@ import com.study.teller.vo.InquiryResVo;
 
 @Service
 public class InquiryService {
+    @Autowired
+    private MsgSender msgSender;
 
     @Autowired
     private BizDateService bizDateService;   
@@ -35,7 +37,7 @@ public class InquiryService {
         String reqMsg = InquiryMsg.pack(vo);
 
         // 3. 계정계 전송
-        String resMsg = MsgSender.send(reqMsg);
+        String resMsg = msgSender.send(reqMsg);
 
         // 4. 응답 해석
         InquiryResVo res = InquiryMsg.unpack(resMsg);

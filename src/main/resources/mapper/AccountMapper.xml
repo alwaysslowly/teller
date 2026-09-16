@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.teller.mapper.AccountMapper">
+
+    <select id="selectAccount" parameterType="string"
+            resultType="com.study.teller.vo.AccountVo">
+        SELECT ACCT_NO, BANK_CODE, CUST_NM, PROD_NM,
+               PASSWD, BALANCE, ACCT_STATUS
+          FROM TB_ACCOUNT
+         WHERE ACCT_NO = #{acctNo}
+    </select>
+
+    <update id="updateBalance" parameterType="com.study.teller.vo.AccountVo">
+        UPDATE TB_ACCOUNT
+           SET BALANCE = #{balance}
+         WHERE ACCT_NO = #{acctNo}
+    </update>
+    
+        <select id="selectAccountList" parameterType="string"
+            resultType="com.study.teller.vo.AccountVo">
+        SELECT ACCT_NO, BANK_CODE, CUST_NM, PROD_NM,
+               BALANCE, ACCT_STATUS
+          FROM TB_ACCOUNT
+         WHERE BANK_CODE = #{bankCode}
+         ORDER BY ACCT_NO
+    </select>
+
+</mapper>

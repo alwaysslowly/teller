@@ -20,6 +20,9 @@ public class CancelService {
 
     @Autowired
     private BizDateService bizDateService;   
+    
+    @Autowired
+    private MsgSender msgSender;
 
 	
 	@Autowired
@@ -47,7 +50,7 @@ public class CancelService {
 
         // 2~4
         String reqMsg = CancelMsg.pack(vo);
-        String resMsg = MsgSender.send(reqMsg);
+        String resMsg = msgSender.send(reqMsg);
         DepositResVo res = CancelMsg.unpack(resMsg);
 
         // 5. 이력 저장

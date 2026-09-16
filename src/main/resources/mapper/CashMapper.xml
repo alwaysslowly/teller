@@ -34,5 +34,23 @@
            AND BRANCH_CODE = #{branchCode}
            AND EMP_NO      = #{empNo}
     </update>
+    
+    <select id="selectBranchCashList" parameterType="com.study.teller.vo.CashVo"
+            resultType="com.study.teller.vo.CashVo">
+        SELECT C.BASE_DATE, C.BRANCH_CODE, C.EMP_NO,
+               C.START_AMT, C.REAL_AMT, C.CLOSE_YN,
+               E.EMP_NM
+          FROM TB_CASH C
+          JOIN TB_EMP  E ON E.EMP_NO = C.EMP_NO
+         WHERE C.BASE_DATE   = #{baseDate}
+           AND C.BRANCH_CODE = #{branchCode}
+         ORDER BY C.EMP_NO
+    </select>
+
+    <update id="updateBizClose" parameterType="string">
+        UPDATE TB_BIZ_DATE
+           SET CLOSE_YN = 'Y'
+         WHERE BASE_DATE = #{baseDate}
+    </update>
 
 </mapper>

@@ -1,5 +1,7 @@
 package com.study.teller.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 import com.study.teller.vo.CashVo;
 
@@ -14,4 +16,11 @@ public interface CashMapper {
 
     /** 마감 처리 */
     int updateClose(CashVo param);
+    
+    /** 영업점 직원들의 마감 현황 */
+    List<CashVo> selectBranchCashList(CashVo param);
+
+    /** 영업일 마감 처리 */
+    int updateBizClose(String baseDate);
+    
 }

@@ -23,6 +23,8 @@ public class DepositService {
     
     @Autowired
     private BizDateService bizDateService;   
+    @Autowired
+    private MsgSender msgSender;
 
 
     public DepositResVo deposit(DepositReqVo vo) throws Exception {
@@ -49,7 +51,7 @@ public class DepositService {
         String reqMsg = DepositMsg.pack(vo);
 
         // 3. 계정계 전송
-        String resMsg = MsgSender.send(reqMsg);
+        String resMsg = msgSender.send(reqMsg);
 
         // 4. 응답 해석
         DepositResVo res = DepositMsg.unpack(resMsg);

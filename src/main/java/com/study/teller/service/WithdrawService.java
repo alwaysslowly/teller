@@ -17,6 +17,8 @@ import com.study.teller.vo.WithdrawReqVo;
 
 @Service
 public class WithdrawService {
+    @Autowired
+    private MsgSender msgSender;
 
     @Autowired
     private TrHistMapper trHistMapper;
@@ -49,7 +51,7 @@ public class WithdrawService {
 
         // 2~4
         String reqMsg = WithdrawMsg.pack(vo);
-        String resMsg = MsgSender.send(reqMsg);
+        String resMsg = msgSender.send(reqMsg);
         DepositResVo res = WithdrawMsg.unpack(resMsg);
 
         // 5. 이력 저장

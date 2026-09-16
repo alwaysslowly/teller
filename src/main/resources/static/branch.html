@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>영업점 마감</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 6px 12px; }
+    th { background: #eee; }
+    .num { text-align: right; }
+    .center { text-align: center; }
+    .done { color: #1F5D4C; font-weight: bold; }
+    .wait { color: #A32E28; font-weight: bold; }
+    #state { margin-top: 14px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>영업점 마감</h3>
+
+<div id="cntArea"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>직원번호</th>
+            <th>직원명</th>
+            <th>시작 시재</th>
+            <th>실제 현금</th>
+            <th>마감</th>
+        </tr>
+    </thead>
+    <tbody id="gridBody"></tbody>
+</table>
+
+<div id="state"></div>
+
+<br>
+<button onclick="fnLoad()">새로고침</button>
+<button onclick="fnClose()">영업점 마감</button>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+window.onload = function() {
+    fnCheckSession(function() {
+
+        if (gEmp.authLv != "09") {
+            alert("책임자만 사용할 수 있는 화면입니다.");
+            location.href = "/main.html";
+            return;
+        }
+
+        fnLoad();
+    });
+};
+
+
+/** 직원별 마감 현황 조회 */
+function fnLoad() {
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/cash/branch", true);
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(list) {
+
+            var tbody = document.getElementById("gridBody");
+            tbody.innerHTML = "";
+
+            var waitCnt = 0;
+
+            for (var i = 0; i < list.length; i++) {
+
+                var c = list[i];
+                var done = ("Y" == c.closeYn);
+                if (!done) waitCnt++;
+
+                var tr = document.createElement("tr");
+                tr.innerHTML =
+                    "<td class='center'>" + c.empNo + "</td>" +
+                    "<td class='center'>" + c.empNm + "</td>" +
+                    "<td class='num'>" + fnAmountFormat(c.startAmt) + "원</td>" +
+                    "<td class='num'>" + (done ? fnAmountFormat(c.realAmt) + "원" : "-") + "</td>" +
+                    "<td class='center " + (done ? "done" : "wait") + "'>" +
+                        (done ? "완료" : "대기") + "</td>";
+
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById("cntArea").innerText = "총 " + list.length + "명";
+
+            var state = document.getElementById("state");
+            if (waitCnt > 0) {
+                state.innerText = "미마감 " + waitCnt + "명이 남아 있습니다.";
+                state.className = "wait";
+            } else {
+                state.innerText = "전 직원 마감 완료. 영업점 마감이 가능합니다.";
+                state.className = "done";
+            }
+        });
+    };
+
+    xhr.send();
+}
+
+
+/** 영업점 마감 실행 */
+function fnClose() {
+
+    if (!confirm("영업점 마감을 하시겠습니까?\n마감 후 거래는 익영업일로 처리됩니다.")) {
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/cash/branch/close", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+            document.getElementById("result").innerText =
+                "영업점 마감이 완료되었습니다.\n이후 거래는 익영업일로 처리됩니다.";
+            fnLoad();
+        });
+    };
+
+    xhr.send("{}");
+}
+
+</script>
+
+</body>
+</html>
