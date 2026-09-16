@@ -12,7 +12,7 @@ public class MsgSender {
 
     public static String send(String reqMsg) throws Exception {
 
-        System.out.println(">> 요청전문 : [" + reqMsg + "]");
+    	  System.out.println(">> 요청전문 : [" + mask(reqMsg) + "]"); 
 
         // 전문에서 거래코드를 꺼낸다 (4번째부터 8자리)
         String trCode = MsgUtil.cut(reqMsg, 4, 8).trim();
@@ -34,7 +34,20 @@ public class MsgSender {
         System.out.println("<< 응답전문 : [" + resMsg + "]");
         return resMsg;
     }
+    
+    /** 로그 출력용 마스킹 */
+    private static String mask(String msg) throws Exception {
 
+        String trCode = MsgUtil.cut(msg, 4, 8).trim();
+
+        // 출금 전문의 비밀번호(53~56) 마스킹
+        if ("WTD0001".equals(trCode)) {
+            return MsgUtil.cut(msg, 0, 53) + "****" + msg.substring(57);
+        }
+
+        return msg;
+    }
+    
     /** 입금 응답 */
     private static String makeDepositRes(String reqMsg) throws Exception {
 
@@ -185,5 +198,7 @@ public class MsgSender {
         sb.append(MsgUtil.padStr(nextTrNo(), 12));
         return addLength(sb.toString());
     }
+    
+    
     
 }
