@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.study.teller.mapper.MenuMapper">
+
+    <select id="selectMenuList" parameterType="string"
+            resultType="com.study.teller.vo.MenuVo">
+        SELECT MENU_ID, MENU_NM, MENU_URL, AUTH_LV, SORT_ORD, USE_YN
+          FROM TB_MENU
+         WHERE USE_YN = 'Y'
+           AND AUTH_LV &lt;= #{authLv}
+         ORDER BY SORT_ORD
+    </select>
+
+</mapper>

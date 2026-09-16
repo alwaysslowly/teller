@@ -125,3 +125,15 @@ function fnLoadCode(grpCode, elId) {
 
     xhr.send();
 }
+
+function fnDrawHeader() {
+
+    var div = document.getElementById("header");
+    if (div == null) return;
+
+    div.innerHTML =
+        "<a href='/main.html' style='margin-right:12px;'>메뉴</a>" +
+        "<span>" + gEmp.empNm + " (" + gEmp.empNo + ") | " +
+        "영업점 " + gEmp.branchCode + "</span>" +
+        "<button onclick='fnLogout()' style='margin-left:12px;'>로그아웃</button>";
+}
