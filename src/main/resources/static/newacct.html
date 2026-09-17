@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>계좌개설</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 7px 12px; }
+    th { background: #eee; width: 110px; text-align: left; }
+    td { width: 240px; }
+    #result { margin-top: 14px; }
+    .ok { color: #1F5D4C; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>계좌개설</h3>
+
+<table>
+    <tr><th>고객명</th>    <td><input type="text" id="custNm" maxlength="10"></td></tr>
+    <tr><th>상품</th>      <td><select id="prodCode"></select></td></tr>
+    <tr><th>비밀번호</th>  <td><input type="password" id="passwd" maxlength="4"></td></tr>
+    <tr><th>비밀번호 확인</th><td><input type="password" id="passwd2" maxlength="4"></td></tr>
+    <tr><th>초기입금액</th><td><input type="text" id="amount" value="100000"></td></tr>
+</table>
+<br>
+<button onclick="fnConfirm()">개설</button>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+window.onload = function() {
+    fnCheckSession(function() {
+        fnLoadCode("PROD", "prodCode");
+        document.getElementById("custNm").focus();
+    });
+};
+
+
+function fnConfirm() {
+
+    if (!fnValidate()) return;
+
+    var param = {
+        custNm   : document.getElementById("custNm").value,
+        prodCode : document.getElementById("prodCode").value,
+        passwd   : document.getElementById("passwd").value,
+        amount   : document.getElementById("amount").value
+    };
+
+    if (!confirm("계좌를 개설하시겠습니까?")) return;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/newacct", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+
+        // 비밀번호는 응답 여부와 무관하게 지운다
+        document.getElementById("passwd").value = "";
+        document.getElementById("passwd2").value = "";
+
+        fnHandleRes(xhr, function(d) {
+            document.getElementById("result").innerHTML =
+                "<div class='ok'>계좌가 개설되었습니다.</div>" +
+                "계좌번호 : " + d.acctNo + "<br>" +
+                "잔액 : " + fnAmountFormat(d.balance) + "원<br>" +
+                "거래번호 : " + d.trNo;
+
+            document.getElementById("custNm").value = "";
+            document.getElementById("custNm").focus();
+        });
+    };
+
+    xhr.send(JSON.stringify(param));
+}
+
+
+function fnValidate() {
+
+    var custNm  = document.getElementById("custNm");
+    var passwd  = document.getElementById("passwd");
+    var passwd2 = document.getElementById("passwd2");
+    var amount  = document.getElementById("amount");
+
+    if (!custNm.value.replace(/\s/g, "")) {
+        alert("고객명을 입력하세요.");
+        custNm.focus(); return false;
+    }
+
+    if (passwd.value.length != 4) {
+        alert("비밀번호는 4자리입니다.");
+        passwd.focus(); passwd.select(); return false;
+    }
+    if (!/^[0-9]+$/.test(passwd.value)) {
+        alert("비밀번호는 숫자만 입력할 수 있습니다.");
+        passwd.focus(); passwd.select(); return false;
+    }
+
+    // ★ 비밀번호 확인
+    if (passwd.value != passwd2.value) {
+        alert("비밀번호가 일치하지 않습니다.");
+        passwd2.focus(); passwd2.select(); return false;
+    }
+
+    if (!/^[0-9]+$/.test(amount.value)) {
+        alert("초기입금액은 숫자만 입력할 수 있습니다.");
+        amount.focus(); amount.select(); return false;
+    }
+    if (Number(amount.value) <= 0) {
+        alert("초기입금액은 0보다 커야 합니다.");
+        amount.focus(); return false;
+    }
+
+    return true;
+}
+
+</script>
+
+</body>
+</html>

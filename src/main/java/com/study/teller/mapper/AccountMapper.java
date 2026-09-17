@@ -13,4 +13,8 @@ public interface AccountMapper {
     int updateBalance(AccountVo vo);
     
     List<AccountVo> selectAccountList(String bankCode);
+    
+    int insertAccount(AccountVo vo);
+
+    String selectMaxAcctNo(String bankCode);
 }

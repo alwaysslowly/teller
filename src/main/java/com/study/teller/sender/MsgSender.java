@@ -40,6 +40,10 @@ public class MsgSender {
             resMsg = makeInquiryRes(reqMsg);
         } else if ("INQ0002".equals(trCode)) {
             resMsg = makeHistoryRes();
+        } else if ("INQ0002".equals(trCode)) {
+            resMsg = makeHistoryRes();
+        } else if ("NEW0001".equals(trCode)) {     // ← 추가
+            resMsg = makeNewAcctRes(reqMsg);       // ← 추가
         } else {
             throw new Exception("알 수 없는 거래코드 : " + trCode);
         }
@@ -198,6 +202,84 @@ public class MsgSender {
         sb.append(MsgUtil.padNum(String.valueOf(balance), 15));
         sb.append(MsgUtil.padStr("", 12));
         return addLength(sb.toString());
+    }
+    
+    /** 계좌개설 */
+    private String makeNewAcctRes(String reqMsg) throws Exception {
+
+        String bankCode = MsgUtil.cut(reqMsg, 12,  3).trim();
+        String custNm   = MsgUtil.cut(reqMsg, 39, 20).trim();
+        String prodCode = MsgUtil.cut(reqMsg, 59,  4).trim();
+        String passwd   = MsgUtil.cut(reqMsg, 63,  4).trim();
+        long   amount   = Long.parseLong(MsgUtil.cut(reqMsg, 67, 15).trim());
+
+        // 상품코드 → 상품명
+        String prodNm = toProdNm(prodCode);
+        if (prodNm == null) {
+            return newAcctFail("E006", "취급하지 않는 상품입니다");
+        }
+
+        // 계좌번호 채번
+        String acctNo = nextAcctNo(bankCode);
+
+        // 계좌 생성
+        AccountVo acct = new AccountVo();
+        acct.setAcctNo(acctNo);
+        acct.setBankCode(bankCode);
+        acct.setCustNm(custNm);
+        acct.setProdNm(prodNm);
+        acct.setPasswd(passwd);
+        acct.setBalance(amount);
+
+        accountMapper.insertAccount(acct);
+
+        // 정상 응답
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr("NEW0001", 8));
+        sb.append(MsgUtil.padStr("0000", 4));
+        sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
+        sb.append(MsgUtil.padStr(acctNo, 14));
+        sb.append(MsgUtil.padNum(String.valueOf(amount), 15));
+        sb.append(MsgUtil.padStr(nextTrNo(), 12));
+        return addLength(sb.toString());
+    }
+
+
+    /** 계좌개설 실패 응답 */
+    private String newAcctFail(String code, String msg) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr("NEW0001", 8));
+        sb.append(MsgUtil.padStr(code, 4));
+        sb.append(MsgUtil.padStr(msg, 40));
+        sb.append(MsgUtil.padStr("", 14));
+        sb.append(MsgUtil.padNum("0", 15));
+        sb.append(MsgUtil.padStr("", 12));
+        return addLength(sb.toString());
+    }
+
+
+    /** 상품코드 → 상품명 */
+    private String toProdNm(String prodCode) {
+        if ("P001".equals(prodCode)) return "보통예금";
+        if ("P002".equals(prodCode)) return "정기예금 12개월";
+        if ("P003".equals(prodCode)) return "자유적금 24개월";
+        return null;
+    }
+
+
+    /** 계좌번호 채번 */
+    private String nextAcctNo(String bankCode) throws Exception {
+
+        String max = accountMapper.selectMaxAcctNo(bankCode);
+
+        long next;
+        if (max == null || max.trim().isEmpty()) {
+            next = 1;
+        } else {
+            next = Long.parseLong(max.trim()) + 1;
+        }
+
+        return MsgUtil.padNum(String.valueOf(next), 10);
     }
 
 

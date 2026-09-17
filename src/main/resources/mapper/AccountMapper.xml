@@ -26,5 +26,21 @@
          WHERE BANK_CODE = #{bankCode}
          ORDER BY ACCT_NO
     </select>
+    
+    <insert id="insertAccount" parameterType="com.study.teller.vo.AccountVo">
+    INSERT INTO TB_ACCOUNT (
+        ACCT_NO, BANK_CODE, CUST_NM, PROD_NM,
+        PASSWD, BALANCE, ACCT_STATUS
+    ) VALUES (
+        #{acctNo}, #{bankCode}, #{custNm}, #{prodNm},
+        #{passwd}, #{balance}, '01'
+    )
+    </insert>
+
+    <select id="selectMaxAcctNo" parameterType="string" resultType="string">
+        SELECT MAX(ACCT_NO)
+          FROM TB_ACCOUNT
+         WHERE BANK_CODE = #{bankCode}
+    </select>
 
 </mapper>

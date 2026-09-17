@@ -38,6 +38,7 @@ INSERT INTO TB_MENU VALUES ('M005', '시재마감', '/cash.html', '01', 5, 'Y');
 INSERT INTO TB_MENU VALUES ('M006', '영업점마감', '/branch.html', '09', 6, 'Y');
 INSERT INTO TB_MENU VALUES ('M007', '계좌조회', '/inquiry.html', '01', 7, 'Y');
 INSERT INTO TB_MENU VALUES ('M008', '계좌목록', '/account.html', '01', 8, 'Y');
+INSERT INTO TB_MENU VALUES ('M009', '계좌개설', '/newacct.html', '01', 9, 'Y');
 
 INSERT INTO TB_CASH (BASE_DATE, BRANCH_CODE, EMP_NO, START_AMT)
 VALUES ('20260916', '0001', 'E12345', 5000000);
@@ -48,4 +49,9 @@ VALUES ('20260916', '0001', 'E99999', 5000000);
 INSERT INTO TB_ACCOUNT VALUES ('1234567890', '012', '홍길동', '정기예금 12개월', '1234', 1000000, '01');
 INSERT INTO TB_ACCOUNT VALUES ('9876543210', '012', '김영희', '자유적금 24개월', '1234',  500000, '01');
 INSERT INTO TB_ACCOUNT VALUES ('1111111111', '012', '박정지', '보통예금',        '1234',  300000, '03');
+
+
+INSERT INTO TB_COMM_CODE VALUES ('PROD', 'P001', '보통예금',        1, 'Y');
+INSERT INTO TB_COMM_CODE VALUES ('PROD', 'P002', '정기예금 12개월', 2, 'Y');
+INSERT INTO TB_COMM_CODE VALUES ('PROD', 'P003', '자유적금 24개월', 3, 'Y');
 
