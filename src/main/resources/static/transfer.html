@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>이체</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 7px 12px; }
+    th { background: #eee; width: 110px; text-align: left; }
+    td { width: 260px; }
+    .ok { color: #1F5D4C; font-weight: bold; }
+    #inNm { margin-left: 8px; color: #1F5D4C; font-weight: bold; }
+    #result { margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>이체</h3>
+
+<table>
+    <tr><th>출금계좌</th><td><input type="text" id="outAcctNo" value="1234567890"></td></tr>
+    <tr><th>비밀번호</th><td><input type="password" id="passwd" maxlength="4"></td></tr>
+    <tr><th>입금계좌</th>
+        <td>
+            <input type="text" id="inAcctNo">
+            <button onclick="fnCheckIn()">확인</button>
+            <span id="inNm"></span>
+        </td></tr>
+    <tr><th>이체금액</th><td><input type="text" id="amount" value="100000"></td></tr>
+</table>
+<br>
+<button onclick="fnConfirm()">이체</button>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+var gInCustNm = "";
+
+
+window.onload = function() {
+    fnCheckSession();
+};
+
+
+/** 입금계좌 확인 (조회 거래로 예금주 확인) */
+function fnCheckIn() {
+
+    var el = document.getElementById("inAcctNo");
+    gInCustNm = "";
+    document.getElementById("inNm").innerText = "";
+
+    if (!el.value) {
+        alert("입금계좌를 입력하세요.");
+        el.focus();
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/inquiry", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+            gInCustNm = d.custNm;
+            document.getElementById("inNm").innerText = d.custNm + " 님";
+        });
+    };
+
+    xhr.send(JSON.stringify({ acctNo : el.value }));
+}
+
+
+function fnConfirm() {
+
+    if (!fnValidate()) return;
+
+    var amount = document.getElementById("amount").value;
+
+    if (!confirm(gInCustNm + " 님께\n" + fnAmountFormat(amount) + "원을 이체하시겠습니까?")) {
+        return;
+    }
+
+    var param = {
+        outAcctNo : document.getElementById("outAcctNo").value,
+        passwd    : document.getElementById("passwd").value,
+        inAcctNo  : document.getElementById("inAcctNo").value,
+        amount    : amount
+    };
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/transfer", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+
+        document.getElementById("passwd").value = "";
+
+        fnHandleRes(xhr, function(d) {
+            document.getElementById("result").innerHTML =
+                "<div class='ok'>이체가 완료되었습니다.</div>" +
+                "받는분 : " + d.inCustNm + "<br>" +
+                "이체금액 : " + fnAmountFormat(amount) + "원<br>" +
+                "출금후잔액 : " + fnAmountFormat(d.balance) + "원<br>" +
+                "거래번호 : " + d.trNo;
+        });
+    };
+
+    xhr.send(JSON.stringify(param));
+}
+
+
+function fnValidate() {
+
+    var outAcctNo = document.getElementById("outAcctNo");
+    var passwd    = document.getElementById("passwd");
+    var inAcctNo  = document.getElementById("inAcctNo");
+    var amount    = document.getElementById("amount");
+
+    if (!outAcctNo.value) {
+        alert("출금계좌를 입력하세요.");
+        outAcctNo.focus(); return false;
+    }
+    if (passwd.value.length != 4) {
+        alert("비밀번호는 4자리입니다.");
+        passwd.focus(); passwd.select(); return false;
+    }
+    if (!inAcctNo.value) {
+        alert("입금계좌를 입력하세요.");
+        inAcctNo.focus(); return false;
+    }
+
+    // ★ 예금주 확인을 거쳤는지
+    if (!gInCustNm) {
+        alert("입금계좌 확인 버튼을 눌러 예금주를 확인하세요.");
+        return false;
+    }
+
+    if (outAcctNo.value == inAcctNo.value) {
+        alert("출금계좌와 입금계좌가 같습니다.");
+        inAcctNo.focus(); return false;
+    }
+
+    if (!/^[0-9]+$/.test(amount.value) || Number(amount.value) <= 0) {
+        alert("이체금액을 확인하세요.");
+        amount.focus(); amount.select(); return false;
+    }
+
+    return true;
+}
+
+</script>
+
+</body>
+</html>

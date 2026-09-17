@@ -39,6 +39,7 @@ INSERT INTO TB_MENU VALUES ('M006', '영업점마감', '/branch.html', '09', 6, 
 INSERT INTO TB_MENU VALUES ('M007', '계좌조회', '/inquiry.html', '01', 7, 'Y');
 INSERT INTO TB_MENU VALUES ('M008', '계좌목록', '/account.html', '01', 8, 'Y');
 INSERT INTO TB_MENU VALUES ('M009', '계좌개설', '/newacct.html', '01', 9, 'Y');
+INSERT INTO TB_MENU VALUES ('M010', '이체', '/transfer.html', '01', 10, 'Y');
 
 INSERT INTO TB_CASH (BASE_DATE, BRANCH_CODE, EMP_NO, START_AMT)
 VALUES ('20260916', '0001', 'E12345', 5000000);

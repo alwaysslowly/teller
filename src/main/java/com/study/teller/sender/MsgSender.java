@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.study.teller.common.MsgUtil;
 import com.study.teller.mapper.AccountMapper;
@@ -28,7 +29,8 @@ public class MsgSender {
     /** 거래번호 채번 (스텁용) */
     private int seq = 0;
 
-
+    
+    @Transactional
     public String send(String reqMsg) throws Exception {
 
         System.out.println(">> 요청전문 : [" + mask(reqMsg) + "]");
@@ -48,10 +50,11 @@ public class MsgSender {
             resMsg = makeHistoryRes(reqMsg);
         } else if ("NEW0001".equals(trCode)) {
             resMsg = makeNewAcctRes(reqMsg);
+        } else if ("TRF0001".equals(trCode)) {     // ← 추가
+            resMsg = makeTransferRes(reqMsg);      // ← 추가
         } else {
             throw new Exception("알 수 없는 거래코드 : " + trCode);
         }
-
         System.out.println("<< 응답전문 : [" + resMsg + "]");
         return resMsg;
     }
@@ -308,7 +311,6 @@ public class MsgSender {
         return addLength(sb.toString());
     }
 
-
     /** 거래코드 → 적요 */
     private String toSummary(String trCode, long amount) {
         if ("DEP0001".equals(trCode)) return "입금";
@@ -317,8 +319,6 @@ public class MsgSender {
         if ("NEW0001".equals(trCode)) return "신규";
         return trCode;
     }
-
-
     private String nextTrNo() throws Exception {
         seq++;
         return "TR" + MsgUtil.padNum(String.valueOf(seq), 10);
@@ -336,5 +336,73 @@ public class MsgSender {
             return MsgUtil.cut(msg, 0, 53) + "****" + msg.substring(57);
         }
         return msg;
+    }
+    
+    /** 이체 */
+    private String makeTransferRes(String reqMsg) throws Exception {
+
+        String outAcctNo = MsgUtil.cut(reqMsg, 39, 14).trim();
+        String passwd    = MsgUtil.cut(reqMsg, 53,  4).trim();
+        String inAcctNo  = MsgUtil.cut(reqMsg, 57, 14).trim();
+        long   amount    = Long.parseLong(MsgUtil.cut(reqMsg, 71, 15).trim());
+
+        // 같은 계좌로 이체 불가
+        if (outAcctNo.equals(inAcctNo)) {
+            return transferFail("E007", "출금계좌와 입금계좌가 같습니다", 0, "");
+        }
+
+        // 출금계좌 확인
+        AccountVo out = accountMapper.selectAccount(outAcctNo);
+        if (out == null) {
+            return transferFail("E001", "출금계좌가 존재하지 않습니다", 0, "");
+        }
+        if (!"01".equals(out.getAcctStatus())) {
+            return transferFail("E003", "출금계좌가 거래할 수 없는 상태입니다", out.getBalance(), "");
+        }
+        if (!out.getPasswd().equals(passwd)) {
+            return transferFail("E005", "비밀번호가 일치하지 않습니다", 0, "");
+        }
+        // 입금계좌 확인
+        AccountVo in = accountMapper.selectAccount(inAcctNo);
+        if (in == null) {
+            return transferFail("E008", "입금계좌가 존재하지 않습니다", out.getBalance(), "");
+        }
+        if (!"01".equals(in.getAcctStatus())) {
+            return transferFail("E009", "입금계좌가 거래할 수 없는 상태입니다", out.getBalance(), "");
+        }
+        // 잔액 확인
+        if (amount > out.getBalance()) {
+            return transferFail("E002", "잔액이 부족합니다", out.getBalance(), "");
+        }
+        // ★ 출금 + 입금
+        long outBal = out.getBalance() - amount;
+        out.setBalance(outBal);
+        accountMapper.updateBalance(out);
+
+        in.setBalance(in.getBalance() + amount);
+        accountMapper.updateBalance(in);
+
+        // 정상 응답
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr("TRF0001", 8));
+        sb.append(MsgUtil.padStr("0000", 4));
+        sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
+        sb.append(MsgUtil.padNum(String.valueOf(outBal), 15));
+        sb.append(MsgUtil.padStr(in.getCustNm(), 20));
+        sb.append(MsgUtil.padStr(nextTrNo(), 12));
+        return addLength(sb.toString());
+    }
+
+
+    /** 이체 실패 응답 */
+    private String transferFail(String code, String msg, long balance, String custNm) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr("TRF0001", 8));
+        sb.append(MsgUtil.padStr(code, 4));
+        sb.append(MsgUtil.padStr(msg, 40));
+        sb.append(MsgUtil.padNum(String.valueOf(balance), 15));
+        sb.append(MsgUtil.padStr(custNm, 20));
+        sb.append(MsgUtil.padStr("", 12));
+        return addLength(sb.toString());
     }
 }
