@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.study.teller.common.BizException;
+import com.study.teller.common.PasswordUtil;
 import com.study.teller.common.Validator;
 import com.study.teller.mapper.EmpMapper;
 import com.study.teller.vo.EmpVo;
@@ -30,9 +31,9 @@ public class LoginService {
         if (!"Y".equals(emp.getUseYn())) {
             throw new BizException("L002", "사용할 수 없는 계정입니다.");
         }
-
+        
         // 비밀번호 확인
-        if (!passwd.equals(emp.getPasswd())) {
+        if (!PasswordUtil.matches(passwd, emp.getPasswd())) {
             throw new BizException("L001", "직원번호 또는 비밀번호가 올바르지 않습니다.");
         }
 

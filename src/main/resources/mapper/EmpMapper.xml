@@ -11,5 +11,12 @@
           FROM TB_EMP
          WHERE EMP_NO = #{empNo}
     </select>
+	
+    <update id="updatePasswd">
+        UPDATE TB_EMP
+           SET PASSWD = #{passwd}
+         WHERE EMP_NO = #{empNo}
+    </update>
+	
 
 </mapper>
