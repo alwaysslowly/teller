@@ -1,6 +1,7 @@
 package com.study.teller.sender;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,13 +9,18 @@ import org.springframework.stereotype.Component;
 
 import com.study.teller.common.MsgUtil;
 import com.study.teller.mapper.AccountMapper;
+import com.study.teller.mapper.TrHistMapper;
 import com.study.teller.vo.AccountVo;
+import com.study.teller.vo.TrHistVo;
 
 @Component
 public class MsgSender {
 
     @Autowired
     private AccountMapper accountMapper;
+    
+    @Autowired
+    private TrHistMapper trHistMapper;
 
     /** 취소된 거래번호 (스텁용) */
     private Set<String> cancelledSet = new HashSet<>();
@@ -39,11 +45,9 @@ public class MsgSender {
         } else if ("INQ0001".equals(trCode)) {
             resMsg = makeInquiryRes(reqMsg);
         } else if ("INQ0002".equals(trCode)) {
-            resMsg = makeHistoryRes();
-        } else if ("INQ0002".equals(trCode)) {
-            resMsg = makeHistoryRes();
-        } else if ("NEW0001".equals(trCode)) {     // ← 추가
-            resMsg = makeNewAcctRes(reqMsg);       // ← 추가
+            resMsg = makeHistoryRes(reqMsg);
+        } else if ("NEW0001".equals(trCode)) {
+            resMsg = makeNewAcctRes(reqMsg);
         } else {
             throw new Exception("알 수 없는 거래코드 : " + trCode);
         }
@@ -157,18 +161,7 @@ public class MsgSender {
 
 
     /** 거래내역 (스텁 그대로) */
-    private String makeHistoryRes() throws Exception {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(MsgUtil.padStr("INQ0002", 8));
-        sb.append(MsgUtil.padStr("0000", 4));
-        sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
-        sb.append(MsgUtil.padNum("3", 4));
-        sb.append(makeItem("20260910", "104800", "입금", "150000", "1150000"));
-        sb.append(makeItem("20260909", "142200", "출금", "50000", "1000000"));
-        sb.append(makeItem("20260908", "093015", "입금", "200000", "1050000"));
-        return addLength(sb.toString());
-    }
+  
 
     private String makeItem(String date, String time, String summary,
                             String amount, String balance) throws Exception {
@@ -280,6 +273,49 @@ public class MsgSender {
         }
 
         return MsgUtil.padNum(String.valueOf(next), 10);
+    }
+    
+    /** 거래내역 조회 */
+    private String makeHistoryRes(String reqMsg) throws Exception {
+
+        String acctNo   = MsgUtil.cut(reqMsg, 39, 14).trim();
+        String fromDate = MsgUtil.cut(reqMsg, 53,  8).trim();
+        String toDate   = MsgUtil.cut(reqMsg, 61,  8).trim();
+
+        TrHistVo param = new TrHistVo();
+        param.setAcctNo(acctNo);
+        param.setFromDate(fromDate);
+        param.setToDate(toDate);
+
+        List<TrHistVo> list = trHistMapper.selectHistByPeriod(param);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr("INQ0002", 8));
+        sb.append(MsgUtil.padStr("0000", 4));
+        sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
+        sb.append(MsgUtil.padNum(String.valueOf(list.size()), 4));
+
+        for (TrHistVo h : list) {
+            sb.append(makeItem(
+                h.getTrDate(),
+                h.getTrTime(),
+                toSummary(h.getTrCode(), h.getAmount()),
+                String.valueOf(Math.abs(h.getAmount())),
+                String.valueOf(h.getBalance())
+            ));
+        }
+
+        return addLength(sb.toString());
+    }
+
+
+    /** 거래코드 → 적요 */
+    private String toSummary(String trCode, long amount) {
+        if ("DEP0001".equals(trCode)) return "입금";
+        if ("WTD0001".equals(trCode)) return "출금";
+        if ("DEP0002".equals(trCode)) return "입금취소";
+        if ("NEW0001".equals(trCode)) return "신규";
+        return trCode;
     }
 
 

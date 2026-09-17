@@ -15,6 +15,8 @@ public class TrHistVo {
     private long   balance;
     private String resCode;
     private String resMsg;
+    private String fromDate;
+    private String toDate;
 
     public String getTrNo() { return trNo; }
     public void setTrNo(String trNo) { this.trNo = trNo; }
@@ -54,4 +56,12 @@ public class TrHistVo {
 
     public String getResMsg() { return resMsg; }
     public void setResMsg(String resMsg) { this.resMsg = resMsg; }
+    
+    public String getFromDate() { return fromDate; }
+    public void setFromDate(String fromDate) { this.fromDate = fromDate; }
+
+    public String getToDate() { return toDate; }
+    public void setToDate(String toDate) { this.toDate = toDate; }
+    
+    
 }

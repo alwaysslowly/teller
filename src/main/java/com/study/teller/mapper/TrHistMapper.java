@@ -10,7 +10,7 @@ public interface TrHistMapper {
 
     int insertHist(TrHistVo vo);
     List<TrHistVo> selectHistList(String acctNo);
-
+    List<TrHistVo> selectHistByPeriod(TrHistVo param);
     TrHistVo selectHist(String trNo);
     
 }

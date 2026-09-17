@@ -35,5 +35,16 @@
          WHERE ACCT_NO = #{acctNo}
          ORDER BY REG_DTM DESC
     </select>
+    
+    <select id="selectHistByPeriod" parameterType="com.study.teller.vo.TrHistVo"
+            resultType="com.study.teller.vo.TrHistVo">
+        SELECT TR_NO, TR_CODE, TR_DATE, TR_TIME,
+               ACCT_NO, AMOUNT, BALANCE
+          FROM TB_TR_HIST
+         WHERE ACCT_NO  = #{acctNo}
+           AND TR_DATE BETWEEN #{fromDate} AND #{toDate}
+           AND RES_CODE = '0000'
+         ORDER BY TR_DATE DESC, TR_TIME DESC
+    </select>
 
 </mapper>
