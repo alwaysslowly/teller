@@ -42,5 +42,13 @@
           FROM TB_ACCOUNT
          WHERE BANK_CODE = #{bankCode}
     </select>
+	
+    <update id="updateClose" parameterType="com.study.teller.vo.AccountVo">
+        UPDATE TB_ACCOUNT
+           SET BALANCE     = #{balance},
+               ACCT_STATUS = #{acctStatus}
+         WHERE ACCT_NO = #{acctNo}
+    </update>
+
 
 </mapper>

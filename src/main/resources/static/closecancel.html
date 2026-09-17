@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>해지취소</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 6px 12px; }
+    th { background: #eee; }
+    .num { text-align: right; }
+    .center { text-align: center; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover { background: #f5f5f5; }
+    tbody tr.on { background: #dde8f0; }
+    #sel { display: none; margin-top: 16px; }
+    .ok { color: #1F5D4C; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>해지취소</h3>
+
+<div>
+    계좌번호 <input type="text" id="acctNo">
+    <button onclick="fnSearch()">해지내역 조회</button>
+</div>
+
+<div id="cntArea"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>거래번호</th>
+            <th>일자</th>
+            <th>시간</th>
+            <th>지급액</th>
+        </tr>
+    </thead>
+    <tbody id="gridBody"></tbody>
+</table>
+
+<div id="sel">
+    <b>선택한 해지거래</b>
+    <table>
+        <tr><th>거래번호</th><td id="dtTrNo"></td></tr>
+        <tr><th>지급액</th><td class="num" id="dtAmount"></td></tr>
+    </table>
+    <br>
+    <button onclick="fnCancel()">해지취소</button>
+</div>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+var gList = [];
+var gSelected = null;
+
+
+window.onload = function() {
+    fnCheckSession(function() {
+        if (gEmp.authLv != "09") {
+            alert("책임자만 사용할 수 있는 화면입니다.");
+            location.href = "/main.html";
+            return;
+        }
+    });
+};
+
+
+/** 해지 이력 조회 */
+function fnSearch() {
+
+    var el = document.getElementById("acctNo");
+    gSelected = null;
+    document.getElementById("sel").style.display = "none";
+    document.getElementById("result").innerHTML = "";
+
+    if (!el.value) {
+        alert("계좌번호를 입력하세요.");
+        el.focus();
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/hist?acctNo=" + el.value, true);
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(list) {
+
+            // 해지 거래만 추림
+            gList = [];
+            for (var i = 0; i < list.length; i++) {
+                if ("CLS0001" == list[i].trCode && "0000" == list[i].resCode) {
+                    gList.push(list[i]);
+                }
+            }
+
+            var tbody = document.getElementById("gridBody");
+            tbody.innerHTML = "";
+
+            for (var i = 0; i < gList.length; i++) {
+                var h = gList[i];
+                var tr = document.createElement("tr");
+                tr.innerHTML =
+                    "<td class='center'>" + h.trNo + "</td>" +
+                    "<td class='center'>" + fnDateFormat(h.trDate) + "</td>" +
+                    "<td class='center'>" + fnTimeFormat(h.trTime) + "</td>" +
+                    "<td class='num'>" + fnAmountFormat(Math.abs(h.amount)) + "원</td>";
+                tr.onclick = fnRowClick(i);
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById("cntArea").innerText = "해지거래 " + gList.length + "건";
+        });
+    };
+
+    xhr.send();
+}
+
+
+function fnRowClick(idx) {
+    return function() {
+
+        var rows = document.getElementById("gridBody").children;
+        for (var i = 0; i < rows.length; i++) rows[i].className = "";
+        rows[idx].className = "on";
+
+        gSelected = gList[idx];
+
+        document.getElementById("dtTrNo").innerText = gSelected.trNo;
+        document.getElementById("dtAmount").innerText =
+            fnAmountFormat(Math.abs(gSelected.amount)) + "원";
+        document.getElementById("sel").style.display = "block";
+    };
+}
+
+
+/** 해지취소 실행 */
+function fnCancel() {
+
+    if (gSelected == null) {
+        alert("취소할 해지거래를 선택하세요.");
+        return;
+    }
+
+    if (!confirm("해지를 취소하시겠습니까?\n계좌가 다시 정상 상태가 됩니다.")) {
+        return;
+    }
+
+    var param = {
+        acctNo  : gSelected.acctNo,
+        orgTrNo : gSelected.trNo
+    };
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/close/cancel", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+            document.getElementById("result").innerHTML =
+                "<div class='ok'>해지가 취소되었습니다.</div>" +
+                "복구된 잔액 : " + fnAmountFormat(d.balance) + "원<br>" +
+                "거래번호 : " + d.trNo;
+
+            document.getElementById("sel").style.display = "none";
+            gSelected = null;
+            fnSearch();
+        });
+    };
+
+    xhr.send(JSON.stringify(param));
+}
+
+</script>
+
+</body>
+</html>

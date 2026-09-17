@@ -1,7 +1,9 @@
 package com.study.teller.sender;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ public class MsgSender {
     /** 거래번호 채번 (스텁용) */
     private int seq = 0;
 
+    private Map<String, Long> closedMap = new HashMap<>();
     
     @Transactional
     public String send(String reqMsg) throws Exception {
@@ -52,8 +55,12 @@ public class MsgSender {
             resMsg = makeNewAcctRes(reqMsg);
         } else if ("TRF0001".equals(trCode)) {     // ← 추가
             resMsg = makeTransferRes(reqMsg);      // ← 추가
-        } else {
-            throw new Exception("알 수 없는 거래코드 : " + trCode);
+        } else if ("CLS0001".equals(trCode)) {     // ← 추가
+            resMsg = makeCloseRes(reqMsg);
+        } else if ("CLS0002".equals(trCode)) {     // ← 추가
+            resMsg = makeCloseCancelRes(reqMsg);
+        }  else {
+        throw new Exception("알 수 없는 거래코드 : " + trCode);
         }
         System.out.println("<< 응답전문 : [" + resMsg + "]");
         return resMsg;
@@ -405,4 +412,96 @@ public class MsgSender {
         sb.append(MsgUtil.padStr("", 12));
         return addLength(sb.toString());
     }
+    
+    /** 계좌해지 */
+    private String makeCloseRes(String reqMsg) throws Exception {
+
+        String acctNo = MsgUtil.cut(reqMsg, 39, 14).trim();
+        String passwd = MsgUtil.cut(reqMsg, 53,  4).trim();
+
+        AccountVo acct = accountMapper.selectAccount(acctNo);
+
+        if (acct == null) {
+            return closeFail("CLS0001", "E001", "존재하지 않는 계좌입니다", 0);
+        }
+        if ("02".equals(acct.getAcctStatus())) {
+            return closeFail("CLS0001", "E011", "이미 해지된 계좌입니다", 0);
+        }
+        if (!"01".equals(acct.getAcctStatus())) {
+            return closeFail("CLS0001", "E003", "거래할 수 없는 계좌입니다", acct.getBalance());
+        }
+        if (!acct.getPasswd().equals(passwd)) {
+            return closeFail("CLS0001", "E005", "비밀번호가 일치하지 않습니다", 0);
+        }
+
+        long payAmt = acct.getBalance();
+        String trNo = nextTrNo();
+
+        // 해지 : 잔액 0, 상태 02
+        acct.setBalance(0);
+        acct.setAcctStatus("02");
+        accountMapper.updateClose(acct);
+
+        // 취소를 위해 기억
+        closedMap.put(trNo, payAmt);
+
+        return closeOk("CLS0001", payAmt, trNo);
+    }
+
+
+    /** 해지취소 */
+    private String makeCloseCancelRes(String reqMsg) throws Exception {
+
+        String acctNo  = MsgUtil.cut(reqMsg, 39, 14).trim();
+        String orgTrNo = MsgUtil.cut(reqMsg, 53, 12).trim();
+
+        AccountVo acct = accountMapper.selectAccount(acctNo);
+
+        if (acct == null) {
+            return closeFail("CLS0002", "E001", "존재하지 않는 계좌입니다", 0);
+        }
+        if (!"02".equals(acct.getAcctStatus())) {
+            return closeFail("CLS0002", "E012", "해지된 계좌가 아닙니다", 0);
+        }
+
+        Long orgBal = closedMap.get(orgTrNo);
+        if (orgBal == null) {
+            return closeFail("CLS0002", "E013", "해지 거래를 찾을 수 없습니다", 0);
+        }
+
+        // 복구 : 잔액 되돌리고 상태 01
+        acct.setBalance(orgBal);
+        acct.setAcctStatus("01");
+        accountMapper.updateClose(acct);
+
+        closedMap.remove(orgTrNo);
+
+        return closeOk("CLS0002", orgBal, nextTrNo());
+    }
+
+
+    /** 해지 정상 응답 */
+    private String closeOk(String trCode, long amount, String trNo) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr(trCode, 8));
+        sb.append(MsgUtil.padStr("0000", 4));
+        sb.append(MsgUtil.padStr("정상처리되었습니다", 40));
+        sb.append(MsgUtil.padNum(String.valueOf(amount), 15));
+        sb.append(MsgUtil.padStr(trNo, 12));
+        return addLength(sb.toString());
+    }
+
+    /** 해지 실패 응답 */
+    private String closeFail(String trCode, String code, String msg, long amount) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        sb.append(MsgUtil.padStr(trCode, 8));
+        sb.append(MsgUtil.padStr(code, 4));
+        sb.append(MsgUtil.padStr(msg, 40));
+        sb.append(MsgUtil.padNum(String.valueOf(amount), 15));
+        sb.append(MsgUtil.padStr("", 12));
+        return addLength(sb.toString());
+    }
+    
+    
+    
 }

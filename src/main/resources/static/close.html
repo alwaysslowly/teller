@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>계좌해지</title>
+<script src="/common.js"></script>
+<style>
+    body { font-family: 맑은 고딕; font-size: 13px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 7px 12px; }
+    th { background: #eee; width: 110px; text-align: left; }
+    td { width: 240px; }
+    .num { text-align: right; }
+    #info { display: none; margin-top: 14px; }
+    #result { margin-top: 14px; }
+    .ok { color: #1F5D4C; font-weight: bold; }
+    .warn { color: #A32E28; }
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:8px; background:#eee; margin-bottom:12px;"></div>
+
+<h3>계좌해지</h3>
+
+<div>
+    계좌번호 <input type="text" id="acctNo">
+    <button onclick="fnSearch()">조회</button>
+</div>
+
+<div id="info">
+    <table>
+        <tr><th>고객명</th>  <td id="dtCustNm"></td></tr>
+        <tr><th>상품명</th>  <td id="dtProdNm"></td></tr>
+        <tr><th>지급예정액</th><td class="num" id="dtBalance"></td></tr>
+        <tr><th>비밀번호</th><td><input type="password" id="passwd" maxlength="4"></td></tr>
+    </table>
+    <br>
+    <div class="warn">해지하면 계좌를 다시 사용할 수 없습니다.</div>
+    <br>
+    <button onclick="fnClose()">해지</button>
+</div>
+
+<hr>
+<div id="result"></div>
+
+<script>
+
+var gAcct = null;
+
+
+window.onload = function() {
+    fnCheckSession();
+};
+
+
+/** 계좌 조회 */
+function fnSearch() {
+
+    var el = document.getElementById("acctNo");
+    gAcct = null;
+    document.getElementById("info").style.display = "none";
+    document.getElementById("result").innerHTML = "";
+
+    if (!el.value) {
+        alert("계좌번호를 입력하세요.");
+        el.focus();
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/inquiry", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+        fnHandleRes(xhr, function(d) {
+
+            if ("02" == d.acctStatus) {
+                alert("이미 해지된 계좌입니다.");
+                return;
+            }
+            if ("01" != d.acctStatus) {
+                alert("거래할 수 없는 계좌입니다.");
+                return;
+            }
+
+            gAcct = d;
+
+            document.getElementById("dtCustNm").innerText  = d.custNm;
+            document.getElementById("dtProdNm").innerText  = d.prodNm;
+            document.getElementById("dtBalance").innerText = fnAmountFormat(d.balance) + "원";
+
+            document.getElementById("info").style.display = "block";
+            document.getElementById("passwd").value = "";
+            document.getElementById("passwd").focus();
+        });
+    };
+
+    xhr.send(JSON.stringify({ acctNo : el.value }));
+}
+
+
+/** 해지 실행 */
+function fnClose() {
+
+    if (gAcct == null) {
+        alert("계좌를 먼저 조회하세요.");
+        return;
+    }
+
+    var pw = document.getElementById("passwd");
+    if (pw.value.length != 4) {
+        alert("비밀번호는 4자리입니다.");
+        pw.focus(); pw.select();
+        return;
+    }
+
+    if (!confirm(gAcct.custNm + " 님의 계좌를 해지하시겠습니까?\n" +
+                 "지급액 " + fnAmountFormat(gAcct.balance) + "원")) {
+        return;
+    }
+
+    var param = {
+        acctNo : gAcct.acctNo,
+        passwd : pw.value
+    };
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/close", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.onload = function() {
+
+        pw.value = "";
+
+        fnHandleRes(xhr, function(d) {
+            document.getElementById("result").innerHTML =
+                "<div class='ok'>계좌가 해지되었습니다.</div>" +
+                "지급액 : " + fnAmountFormat(d.balance) + "원<br>" +
+                "거래번호 : " + d.trNo +
+                "<div style='margin-top:8px; color:#666;'>" +
+                "해지 취소가 필요하면 위 거래번호가 필요합니다.</div>";
+
+            document.getElementById("info").style.display = "none";
+            gAcct = null;
+        });
+    };
+
+    xhr.send(JSON.stringify(param));
+}
+
+</script>
+
+</body>
+</html>
